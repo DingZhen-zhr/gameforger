@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0A0E17;display:flex;justify-content:center;align-items:center;height:100dvh;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+canvas{display:block;border-radius:12px}
+</style>
+</head>
+<body>
+<canvas id="g"></canvas>
+<script>
+const c=document.getElementById('g'),ctx=c.getContext('2d');
+function r(){c.width=Math.min(innerWidth,420);c.height=Math.min(innerHeight,640)}
+r();onresize=r;
+
+let score=0,gameOver=0,frame=0;
+const p={x:50,y:0,w:28,h:28,vy:0,grounded:false};
+const plats=[],items=[];
+let L=0,R=0;
+
+function init(){
+  p.y=c.height-100;p.vy=0;p.grounded=false;
+  plats.length=0;items.length=0;score=0;gameOver=0;
+  plats.push({x:0,y:c.height-28,w:c.width,h:28});
+  for(let i=0;i<6;i++)plats.push({x:40+Math.random()*(c.width-100),y:80+Math.random()*(c.height-160),w:55+Math.random()*35,h:10});
+  for(let i=0;i<5;i++)items.push({x:60+Math.random()*(c.width-120),y:100+Math.random()*(c.height-200),r:7,collected:0});
+}
+
+init();
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')L=1;
+  if(e.key==='ArrowRight')R=1;
+  if((e.key===' '||e.key==='ArrowUp')&&p.grounded){p.vy=-11;p.grounded=false}
+  if(gameOver)init();
+});
+document.addEventListener('keyup',e=>{
+  if(e.key==='ArrowLeft')L=0;
+  if(e.key==='ArrowRight')R=0;
+});
+c.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.touches[0],r=c.getBoundingClientRect();
+  const x=t.clientX-r.left;
+  if(x<c.width/2)L=1;else R=1;
+  if(p.grounded){p.vy=-11;p.grounded=false}
+  if(gameOver)init();
+});
+c.addEventListener('touchend',e=>{e.preventDefault();L=0;R=0});
+
+function update(){
+  if(gameOver)return;
+  p.vx=0;if(L)p.vx=-4.5;if(R)p.vx=4.5;
+  p.vy+=0.48;p.x+=p.vx;p.y+=p.vy;p.grounded=false;
+  for(const pl of plats){
+    if(p.vy>0&&p.x+p.w>pl.x&&p.x<pl.x+pl.w&&p.y+p.h>pl.y&&p.y+p.h<pl.y+pl.h+8){
+      p.y=pl.y-p.h;p.vy=0;p.grounded=true;
+    }
+  }
+  for(const it of items){
+    if(!it.collected&&Math.abs(p.x+p.w/2-it.x)<it.r+p.w/2&&Math.abs(p.y+p.h/2-it.y)<it.r+p.h/2){
+      it.collected=1;score++;
+    }
+  }
+  if(p.x<0)p.x=0;if(p.x+p.w>c.width)p.x=c.width-p.w;
+  if(p.y>c.height+50)gameOver=1;
+  if(score>=items.length)gameOver=2;
+}
+
+function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#0A0E17';ctx.fillRect(0,0,c.width,c.height);
+  // Starfield
+  ctx.fillStyle='#fff';
+  for(let i=0;i<40;i++){
+    const sx=(i*137+i*i*13)%c.width,sy=(i*89+i*i*7)%c.height;
+    const br=0.25+((i*73)%7)/10;
+    ctx.globalAlpha=br;ctx.fillRect(sx,sy,1.5,1.5);
+  }
+  ctx.globalAlpha=1;
+  // Platforms
+  for(const pl of plats){
+    const gr=ctx.createLinearGradient(pl.x,pl.y,pl.x,pl.y+pl.h);
+    gr.addColorStop(0,'#7C5CFC');gr.addColorStop(1,'#4A2FB5');
+    ctx.fillStyle=gr;ctx.shadowBlur=10;ctx.shadowColor='#7C5CFC44';
+    ctx.beginPath();ctx.roundRect(pl.x,pl.y,pl.w,pl.h,4);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  // Collectibles
+  for(const it of items){
+    if(it.collected)continue;
+    ctx.beginPath();ctx.arc(it.x,it.y+Math.sin(frame*0.05)*4,it.r,0,Math.PI*2);
+    ctx.fillStyle='#FFD700';ctx.shadowBlur=15;ctx.shadowColor='#FFD70066';ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#FFD70044';
+    ctx.beginPath();ctx.arc(it.x,it.y+Math.sin(frame*0.05)*4,it.r+5,0,Math.PI*2);ctx.fill();
+  }
+  // Player
+  ctx.shadowBlur=18;ctx.shadowColor='#00E5FF44';
+  ctx.fillStyle='#00E5FF';ctx.beginPath();ctx.roundRect(p.x,p.y,p.w,p.h,6);ctx.fill();
+  ctx.shadowBlur=0;
+  // Eyes
+  ctx.fillStyle='#0A0E17';ctx.fillRect(p.x+7,p.y+7,4,4);ctx.fillRect(p.x+17,p.y+7,4,4);
+  // UI
+  ctx.fillStyle='#E8EAED';
+  ctx.font='bold 16px -apple-system,sans-serif';ctx.textAlign='left';
+  ctx.fillText('⭐ '+score+'/'+items.length,12,30);
+  if(gameOver){
+    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#E8EAED';ctx.textAlign='center';
+    ctx.font='bold 26px -apple-system,sans-serif';
+    if(gameOver===2)ctx.fillText('🎉 You Win!',c.width/2,c.height/2-12);
+    else ctx.fillText('💀 Game Over',c.width/2,c.height/2-12);
+    ctx.font='15px -apple-system,sans-serif';
+    ctx.fillText('Tap to restart',c.width/2,c.height/2+22);
+    ctx.textAlign='left';
+  }
+  frame++;
+}
+
+setInterval(()=>{update();draw()},1000/60);
+</script>
+</body>
+</html>
