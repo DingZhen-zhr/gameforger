@@ -64,17 +64,15 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
           _balance = result.balance;
           _loading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('购买成功！+${result.added} 点数')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('购买成功！+${result.added} 点数')));
       }
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('购买失败: $e'),
-              backgroundColor: AppTheme.error),
+          SnackBar(content: Text('购买失败: $e'), backgroundColor: AppTheme.error),
         );
       }
     }
@@ -87,41 +85,56 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: AppTheme.error),
-                      const SizedBox(height: 16),
-                      Text(_error!,
-                          style: const TextStyle(color: AppTheme.textSecondary)),
-                      const SizedBox(height: 16),
-                      ElevatedButton(onPressed: _load, child: const Text('重试')),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      _buildBalanceCard(),
-                      const SizedBox(height: 24),
-                      Text('购买点数',
-                          style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 12),
-                      ..._packages.map((pkg) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildPackageCard(pkg),
-                          )),
-                      const SizedBox(height: 24),
-                      _buildRulesCard(),
-                      const SizedBox(height: 24),
-                      _buildTransactionHistory(),
-                    ],
-                  ),
+          ? Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: AppTheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: AppTheme.textSecondary),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(onPressed: _load, child: const Text('重试')),
+                  ],
                 ),
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  16 + MediaQuery.of(context).padding.bottom,
+                ),
+                children: [
+                  _buildBalanceCard(),
+                  const SizedBox(height: 24),
+                  Text('购买点数', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 12),
+                  ..._packages.map(
+                    (pkg) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildPackageCard(pkg),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildRulesCard(),
+                  const SizedBox(height: 24),
+                  _buildTransactionHistory(),
+                ],
+              ),
+            ),
     );
   }
 
@@ -133,11 +146,14 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
           children: [
             const Icon(Icons.monetization_on, size: 48, color: AppTheme.gold),
             const SizedBox(height: 12),
-            Text('$_balance',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: AppTheme.gold, fontWeight: FontWeight.bold)),
-            const Text('可用点数',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            Text(
+              '$_balance',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                color: AppTheme.gold,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Text('可用点数', style: TextStyle(color: AppTheme.textSecondary)),
           ],
         ),
       ),
@@ -148,39 +164,68 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppTheme.gold.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.stars_rounded, color: AppTheme.gold),
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppTheme.gold.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.stars_rounded, color: AppTheme.gold),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pkg.name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${pkg.credits} 点数',
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(pkg.name,
-                      style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text('${pkg.credits} 点数',
-                      style: const TextStyle(
-                          color: AppTheme.textSecondary, fontSize: 13)),
-                ],
-              ),
-            ),
-            Text('\$${pkg.price.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.gold, fontWeight: FontWeight.bold)),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: () => _purchase(pkg),
-              style: ElevatedButton.styleFrom(minimumSize: const Size(60, 36)),
-              child: const Text('购买'),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '\$${pkg.price.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppTheme.gold,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 36,
+                  child: ElevatedButton(
+                    onPressed: () => _purchase(pkg),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(72, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: const Text('购买'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -195,8 +240,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('点数消耗说明',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text('点数消耗说明', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             const _RuleRow(Icons.chat, '文本生成/对话', '1 点 / 次'),
             const _RuleRow(Icons.palette, '图片生成', '5 点 / 次'),
@@ -214,9 +258,13 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
       children: [
         Row(
           children: [
-            Text('交易记录',
-                style: Theme.of(context).textTheme.titleLarge),
-            const Spacer(),
+            Expanded(
+              child: Text(
+                '交易记录',
+                style: Theme.of(context).textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             TextButton(
               onPressed: _load,
               child: const Text('刷新', style: TextStyle(fontSize: 12)),
@@ -229,8 +277,10 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Center(
-                child: Text('暂无交易记录',
-                    style: TextStyle(color: AppTheme.textSecondary)),
+                child: Text(
+                  '暂无交易记录',
+                  style: TextStyle(color: AppTheme.textSecondary),
+                ),
               ),
             ),
           )
@@ -240,16 +290,20 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
             final icon = t.type == 'purchase'
                 ? Icons.shopping_cart
                 : t.type == 'deduction'
-                    ? Icons.remove_circle
-                    : Icons.refresh;
+                ? Icons.remove_circle
+                : Icons.refresh;
             return Card(
               child: ListTile(
-                leading: Icon(icon,
-                    color: isPositive ? AppTheme.gold : AppTheme.textSecondary,
-                    size: 20),
+                leading: Icon(
+                  icon,
+                  color: isPositive ? AppTheme.gold : AppTheme.textSecondary,
+                  size: 20,
+                ),
                 title: Text(
                   t.description ?? t.type,
                   style: Theme.of(context).textTheme.bodySmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 trailing: Text(
                   '${isPositive ? '+' : ''}${t.amount}',
@@ -289,8 +343,18 @@ class _RuleRow extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: AppTheme.primary),
           const SizedBox(width: 12),
-          Expanded(child: Text(label)),
-          Text(cost, style: const TextStyle(color: AppTheme.textSecondary)),
+          Expanded(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              cost,
+              style: const TextStyle(color: AppTheme.textSecondary),
+              textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );

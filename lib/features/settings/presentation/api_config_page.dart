@@ -70,8 +70,7 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
     for (var i = 0; i < _modelConfigs.length; i++) {
       final cfg = _modelConfigs[i];
       final useCustom = await ModelRouter.hasCustomKey(cfg.modelType);
-      final key =
-          useCustom ? (await ModelRouter.getApiKey(cfg.modelType)) : '';
+      final key = useCustom ? (await ModelRouter.getApiKey(cfg.modelType)) : '';
       final provider = await ModelRouter.getProvider(cfg.modelType);
 
       setState(() {
@@ -104,7 +103,12 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('API 配置')),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.of(context).padding.bottom,
+        ),
         itemCount: _modelConfigs.length,
         itemBuilder: (_, i) => _buildModelCard(i),
       ),
@@ -129,8 +133,14 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                 children: [
                   Icon(config.icon, size: 24, color: AppTheme.primary),
                   const SizedBox(width: 12),
-                  Text(config.label,
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Expanded(
+                    child: Text(
+                      config.label,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -154,8 +164,10 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                   initialValue: _selectedProvider[index],
                   decoration: const InputDecoration(
                     labelText: '供应商',
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   items: config.providers
                       .map((p) => DropdownMenuItem(value: p, child: Text(p)))
@@ -196,11 +208,13 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.wifi_find, size: 18),
-                    label: Text(testing ? '测试中...' : '测试连接'),
+                    label: Text(
+                      testing ? '测试中...' : '测试连接',
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ],

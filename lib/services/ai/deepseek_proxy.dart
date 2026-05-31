@@ -33,11 +33,15 @@ class AiProxy {
     // Platform default → deduct credits, then call Edge Function
     await _tryDeduct(modelType);
 
+    final provider = await AiProviderRegistry.forModelType(modelType);
+    final model = provider.defaultModel(modelType);
+
     final resp = await Supabase.instance.client.functions
         .invoke(
           'ai-deepseek',
           body: {
             'messages': messages,
+            'model': model,
             'temperature': temperature,
             'max_tokens': maxTokens,
           },
@@ -50,7 +54,15 @@ class AiProxy {
         );
 
     final data = resp.data;
-    if (data is Map<String, dynamic>) return data;
+    if (data is Map<String, dynamic>) {
+      // Check for Edge Function error
+      if (data.containsKey('error')) {
+        final hint = data['hint'] as String?;
+        final msg = data['error'] as String;
+        throw Exception(hint != null ? '$msg\n$hint' : msg);
+      }
+      return data;
+    }
 
     throw Exception('Unexpected Edge Function response: $data');
   }
@@ -78,9 +90,7 @@ class AiProxy {
       return;
     }
 
-    // Platform default → deduct credits, then call Edge Function
-    await _tryDeduct(modelType);
-
+    // Platform default → call Edge Function (credit deduction is handled inside chat())
     final result = await chat(
       messages: messages,
       modelType: modelType,

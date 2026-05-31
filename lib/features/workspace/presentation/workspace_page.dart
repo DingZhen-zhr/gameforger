@@ -28,13 +28,26 @@ class WorkspacePage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('思维链工作台'),
         actions: [
-          TextButton.icon(
-            onPressed: state.isSpecComplete
-                ? () => _generateAndNavigate(context, ref, projectId,
-                    state.gameSpec, state.isSpecComplete)
-                : null,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('生成游戏'),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton.icon(
+              onPressed: state.isSpecComplete
+                  ? () => _generateAndNavigate(
+                      context,
+                      ref,
+                      projectId,
+                      state.gameSpec,
+                      state.isSpecComplete,
+                    )
+                  : null,
+              icon: const Icon(Icons.play_arrow, size: 18),
+              label: const Text('生成'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ),
         ],
       ),
@@ -58,21 +71,38 @@ class WorkspacePage extends ConsumerWidget {
                         .read(workspaceProvider(projectId).notifier)
                         .filledDimKeys,
                     onEdit: (dimKey, label, currentValue) => _showEditDialog(
-                        context, ref, projectId, dimKey, label, currentValue),
+                      context,
+                      ref,
+                      projectId,
+                      dimKey,
+                      label,
+                      currentValue,
+                    ),
                     onRediscuss: (dimKey, label) => _showRediscussConfirm(
-                        context, ref, projectId, dimKey, label),
+                      context,
+                      ref,
+                      projectId,
+                      dimKey,
+                      label,
+                    ),
                   ),
                 ),
                 if (state.messages.isEmpty)
-                  const SliverFillRemaining(child: _EmptyState())
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _EmptyState(),
+                  )
                 else
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => _ChatBubble(
-                        message: state.messages[i],
-                        projectId: projectId,
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, i) => _ChatBubble(
+                          message: state.messages[i],
+                          projectId: projectId,
+                        ),
+                        childCount: state.messages.length,
                       ),
-                      childCount: state.messages.length,
                     ),
                   ),
                 // Extra padding at bottom of scroll content
@@ -138,8 +168,10 @@ class WorkspacePage extends ConsumerWidget {
                     cancelled = true;
                     Navigator.of(ctx).pop();
                   },
-                  child: const Text('取消',
-                      style: TextStyle(color: AppTheme.textSecondary)),
+                  child: const Text(
+                    '取消',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
                 ),
               ],
             ),
@@ -150,16 +182,18 @@ class WorkspacePage extends ConsumerWidget {
 
     try {
       final service = GameGenService();
-      final html = await service.generateGame(spec).timeout(
-        const Duration(minutes: 3),
-        onTimeout: () => throw Exception(
-          '游戏生成超时（3分钟），请简化游戏设定后重试，或到「设置 → API 配置」配置自定义 API Key。',
-        ),
-      );
+      final html = await service
+          .generateGame(spec)
+          .timeout(
+            const Duration(minutes: 3),
+            onTimeout: () => throw Exception(
+              '游戏生成超时（3分钟），请简化游戏设定后重试，或到「设置 → API 配置」配置自定义 API Key。',
+            ),
+          );
 
       if (cancelled) return;
 
-      ref.read(pendingGameHtmlProvider.notifier).state = html;
+      ref.read(pendingGameHtmlProvider(projectId).notifier).state = html;
 
       // Save to Supabase + local cache (non-blocking: preview even if save fails)
       try {
@@ -167,7 +201,7 @@ class WorkspacePage extends ConsumerWidget {
         await buildService.saveBuild(projectId, html, spec);
         await LocalDbService().cacheBuild(projectId, html, spec);
       } catch (saveError) {
-        print('⚠️ [Workspace] Failed to save build: $saveError');
+        debugPrint('[Workspace] Failed to save build: $saveError');
       }
 
       if (context.mounted) {
@@ -206,18 +240,26 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.psychology_outlined,
-              size: 48, color: AppTheme.primary.withValues(alpha: 0.4)),
-          const SizedBox(height: 16),
-          Text('开始与 AI 对话，逐步完善你的游戏创意',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: AppTheme.textSecondary)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.psychology_outlined,
+              size: 48,
+              color: AppTheme.primary.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '开始与 AI 对话，逐步完善你的游戏创意',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -237,23 +279,26 @@ class _ChatBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
-        crossAxisAlignment:
-            isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Container(
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.85,
+              maxWidth: MediaQuery.of(context).size.width * 0.82,
             ),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: isUser
                   ? AppTheme.primary.withValues(alpha: 0.2)
                   : isSystem
-                      ? AppTheme.surfaceVariant.withValues(alpha: 0.5)
-                      : AppTheme.surfaceVariant,
+                  ? AppTheme.surfaceVariant.withValues(alpha: 0.5)
+                  : AppTheme.surfaceVariant,
               borderRadius: BorderRadius.circular(16).copyWith(
                 bottomRight: isUser ? const Radius.circular(4) : null,
-                bottomLeft: !isUser && !isSystem ? const Radius.circular(4) : null,
+                bottomLeft: !isUser && !isSystem
+                    ? const Radius.circular(4)
+                    : null,
               ),
             ),
             child: Column(
@@ -264,9 +309,9 @@ class _ChatBubble extends StatelessWidget {
                     : Text(
                         message.content,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textPrimary,
-                              height: 1.5,
-                            ),
+                          color: AppTheme.textPrimary,
+                          height: 1.5,
+                        ),
                       ),
                 if (message.cards.isNotEmpty) ...[
                   const SizedBox(height: 8),
@@ -280,10 +325,10 @@ class _ChatBubble extends StatelessWidget {
               padding: const EdgeInsets.only(left: 4, top: 4),
               child: Text(
                 message.isStreaming ? '输入中...' : _formatTime(message.timestamp),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontSize: 10, color: AppTheme.textSecondary),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: 10,
+                  color: AppTheme.textSecondary,
+                ),
               ),
             ),
         ],
@@ -342,9 +387,9 @@ class _StreamingTextState extends State<_StreamingText>
             ],
           ),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textPrimary,
-                height: 1.5,
-              ),
+            color: AppTheme.textPrimary,
+            height: 1.5,
+          ),
         );
       },
     );
@@ -431,9 +476,10 @@ class _QuickToolbar extends ConsumerWidget {
           FilledButton(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
-                ref
-                    .read(workspaceProvider(projectId).notifier)
-                    .addManualCard(type, {'content': controller.text.trim()});
+                ref.read(workspaceProvider(projectId).notifier).addManualCard(
+                  type,
+                  {'content': controller.text.trim()},
+                );
                 Navigator.pop(ctx);
               }
             },
@@ -477,11 +523,12 @@ class _ToolbarChip extends StatelessWidget {
             children: [
               Icon(icon, size: 16, color: AppTheme.textSecondary),
               const SizedBox(width: 4),
-              Text(label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppTheme.textSecondary)),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+              ),
             ],
           ),
         ),
@@ -503,8 +550,10 @@ void _showEditDialog(
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: AppTheme.surfaceVariant,
-      title: Text('编辑 $label',
-          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
+      title: Text(
+        '编辑 $label',
+        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+      ),
       content: TextField(
         controller: controller,
         autofocus: true,
@@ -524,8 +573,10 @@ void _showEditDialog(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('取消',
-              style: TextStyle(color: AppTheme.textSecondary)),
+          child: const Text(
+            '取消',
+            style: TextStyle(color: AppTheme.textSecondary),
+          ),
         ),
         FilledButton(
           onPressed: () {
@@ -536,9 +587,7 @@ void _showEditDialog(
               Navigator.pop(ctx);
             }
           },
-          style: FilledButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-          ),
+          style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
           child: const Text('保存'),
         ),
       ],
@@ -559,11 +608,18 @@ void _showRediscussConfirm(
       backgroundColor: AppTheme.surfaceVariant,
       title: Row(
         children: [
-          const Icon(Icons.chat_bubble_outline,
-              color: AppTheme.primary, size: 20),
+          const Icon(
+            Icons.chat_bubble_outline,
+            color: AppTheme.primary,
+            size: 20,
+          ),
           const SizedBox(width: 8),
-          const Text('重新讨论',
-              style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
+          const Expanded(
+            child: Text(
+              '重新讨论',
+              style: TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+            ),
+          ),
         ],
       ),
       content: Text(
@@ -573,8 +629,10 @@ void _showRediscussConfirm(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('取消',
-              style: TextStyle(color: AppTheme.textSecondary)),
+          child: const Text(
+            '取消',
+            style: TextStyle(color: AppTheme.textSecondary),
+          ),
         ),
         FilledButton(
           onPressed: () {
@@ -583,9 +641,7 @@ void _showRediscussConfirm(
                 .read(workspaceProvider(projectId).notifier)
                 .rediscussDimension(dimKey, label);
           },
-          style: FilledButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-          ),
+          style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
           child: const Text('开始重新讨论'),
         ),
       ],
@@ -619,83 +675,104 @@ void _showSpecOverview(
         (Icons.bar_chart, '难度', spec.difficulty),
       ];
 
-      return Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      return SafeArea(
+        top: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.82,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.grid_view_rounded,
-                    size: 20, color: AppTheme.primary),
-                const SizedBox(width: 8),
-                const Text('游戏创意总览',
-                    style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600)),
-                const Spacer(),
-                Text(
-                  '${state.gameSpec.filledCount} / 9',
-                  style: const TextStyle(
-                      color: AppTheme.primary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...items.map((item) {
-              final (icon, label, value) = item;
-              final isFilled = value != null && value.isNotEmpty;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    Icon(icon, size: 16, color: AppTheme.textSecondary),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 80,
-                      child: Text(label,
-                          style: TextStyle(
-                              color: isFilled
-                                  ? AppTheme.textPrimary
-                                  : AppTheme.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500)),
+                    const Icon(
+                      Icons.grid_view_rounded,
+                      size: 20,
+                      color: AppTheme.primary,
                     ),
-                    Expanded(
+                    const SizedBox(width: 8),
+                    const Expanded(
                       child: Text(
-                        value ?? '（未设定）',
+                        '游戏创意总览',
                         style: TextStyle(
-                            color: isFilled
-                                ? AppTheme.textPrimary
-                                : AppTheme.textTertiary,
-                            fontSize: 12),
+                          color: AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${state.gameSpec.filledCount} / 9',
+                      style: const TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-              );
-            }),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                },
-                icon: const Icon(Icons.close, size: 16),
-                label: const Text('关闭'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textSecondary,
-                  side: const BorderSide(color: AppTheme.outlineDark),
+                const SizedBox(height: 16),
+                ...items.map((item) {
+                  final (icon, label, value) = item;
+                  final isFilled = value != null && value.isNotEmpty;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(icon, size: 16, color: AppTheme.textSecondary),
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: 80,
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: isFilled
+                                  ? AppTheme.textPrimary
+                                  : AppTheme.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            value ?? '（未设定）',
+                            style: TextStyle(
+                              color: isFilled
+                                  ? AppTheme.textPrimary
+                                  : AppTheme.textTertiary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                    },
+                    icon: const Icon(Icons.close, size: 16),
+                    label: const Text('关闭'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.outlineDark),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     },
@@ -754,9 +831,14 @@ class _InputBarState extends ConsumerState<_InputBar> {
               enabled: !isLoading,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
+              minLines: 1,
+              maxLines: 4,
               decoration: const InputDecoration(
                 hintText: '输入你的想法...',
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -766,9 +848,7 @@ class _InputBarState extends ConsumerState<_InputBar> {
             onPressed: isLoading ? null : _send,
             icon: Icon(
               isLoading ? Icons.hourglass_top : Icons.send_rounded,
-              color: isLoading
-                  ? AppTheme.textSecondary
-                  : AppTheme.primary,
+              color: isLoading ? AppTheme.textSecondary : AppTheme.primary,
             ),
             style: IconButton.styleFrom(
               backgroundColor: AppTheme.surfaceVariant,

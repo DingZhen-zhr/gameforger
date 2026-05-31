@@ -12,6 +12,7 @@ import '../../workspace/presentation/providers/workspace_provider.dart';
 import 'providers/preview_provider.dart';
 import 'widgets/code_panel.dart';
 import 'widgets/asset_panel.dart';
+import 'widgets/chat_panel.dart';
 
 class PreviewPage extends ConsumerStatefulWidget {
   final String projectId;
@@ -36,17 +37,22 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
-        ref.read(previewProvider(widget.projectId).notifier).setTab(_tabController.index);
+        ref
+            .read(previewProvider(widget.projectId).notifier)
+            .setTab(_tabController.index);
       }
     });
     // Consume any pending HTML set by the workspace before navigation.
     // On the first visit this is a no-op ([_init] handles it); on
     // subsequent visits (reused notifier) it picks up freshly generated
     // HTML without stale-cache fallback.
-    ref.read(previewProvider(widget.projectId).notifier).consumePending();
+    // Deferred to post-frame to avoid modifying provider state during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(previewProvider(widget.projectId).notifier).consumePending();
+    });
   }
 
   @override
@@ -71,8 +77,10 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
             children: [
               CircularProgressIndicator(strokeWidth: 3),
               SizedBox(height: 16),
-              Text('加载游戏中...',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+              Text(
+                '加载游戏中...',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+              ),
             ],
           ),
         ),
@@ -89,11 +97,12 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                 top: 8,
                 right: 8,
                 child: IconButton(
-                  icon: const Icon(Icons.fullscreen_exit, color: Colors.white70),
-                  onPressed: notifier.toggleFullscreen,
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.black38,
+                  icon: const Icon(
+                    Icons.fullscreen_exit,
+                    color: Colors.white70,
                   ),
+                  onPressed: notifier.toggleFullscreen,
+                  style: IconButton.styleFrom(backgroundColor: Colors.black38),
                 ),
               ),
             ],
@@ -175,9 +184,12 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                         labelColor: AppTheme.primary,
                         unselectedLabelColor: AppTheme.textSecondary,
                         labelStyle: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
                         tabs: const [
                           Tab(text: '代码', icon: Icon(Icons.code, size: 18)),
+                          Tab(text: '对话', icon: Icon(Icons.chat, size: 18)),
                           Tab(text: '素材', icon: Icon(Icons.image, size: 18)),
                           Tab(text: '信息', icon: Icon(Icons.info, size: 18)),
                         ],
@@ -188,19 +200,24 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                         controller: _tabController,
                         children: [
                           CodePanel(
-                        projectId: widget.projectId,
-                        onApplyCode: (newCode) {
-                          ref.read(previewProvider(widget.projectId).notifier)
-                              .updateCode(newCode);
-                          // WebView reloads automatically via hash-based key change
-                        },
-                      ),
+                            projectId: widget.projectId,
+                            onApplyCode: (newCode) {
+                              ref
+                                  .read(
+                                    previewProvider(widget.projectId).notifier,
+                                  )
+                                  .updateCode(newCode);
+                              // WebView reloads automatically via hash-based key change
+                            },
+                          ),
+                          PreviewChatPanel(projectId: widget.projectId),
                           AssetPanel(
                             projectId: widget.projectId,
                             onApplyCode: (newCode) {
                               ref
-                                  .read(previewProvider(widget.projectId)
-                                      .notifier)
+                                  .read(
+                                    previewProvider(widget.projectId).notifier,
+                                  )
                                   .updateCode(newCode);
                               // WebView reloads automatically via hash-based key change
                             },
@@ -244,10 +261,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
       notifier.shareCode();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('分享失败: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
+        SnackBar(content: Text('分享失败: $e'), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -259,12 +273,12 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
     try {
       final spec = ref.read(workspaceProvider(widget.projectId)).gameSpec;
       final service = GameGenService();
-      final html = await service.generateGame(spec).timeout(
-        const Duration(minutes: 3),
-        onTimeout: () => throw Exception(
-          '游戏生成超时（3分钟），请简化游戏设定后重试。',
-        ),
-      );
+      final html = await service
+          .generateGame(spec)
+          .timeout(
+            const Duration(minutes: 3),
+            onTimeout: () => throw Exception('游戏生成超时（3分钟），请简化游戏设定后重试。'),
+          );
 
       final buildService = GameBuildService(SupabaseManager.client);
       await buildService.saveBuild(widget.projectId, html, spec);
@@ -274,9 +288,9 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
       // WebView will reload automatically via hash-based key change
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('重新生成失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('重新生成失败: $e')));
       }
     } finally {
       if (mounted) setState(() => _isRegenerating = false);
@@ -356,19 +370,27 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.error_outline_rounded,
-                            size: 52, color: AppTheme.error),
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          size: 52,
+                          color: AppTheme.error,
+                        ),
                         const SizedBox(height: 16),
-                        const Text('预览加载失败',
-                            style: TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600)),
+                        const Text(
+                          '预览加载失败',
+                          style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           _webViewErrorMessage,
                           style: const TextStyle(
-                              color: AppTheme.textSecondary, fontSize: 13),
+                            color: AppTheme.textSecondary,
+                            fontSize: 13,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 20),
@@ -398,8 +420,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
       if (filePath != null) {
         _webViewController!.loadFile(assetFilePath: filePath);
       } else {
-        final htmlCode =
-            ref.read(previewProvider(widget.projectId)).htmlCode;
+        final htmlCode = ref.read(previewProvider(widget.projectId)).htmlCode;
         if (htmlCode.isNotEmpty) {
           _webViewController!.loadData(
             data: htmlCode,
@@ -423,58 +444,89 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.82,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.help_outline,
-                    size: 22, color: AppTheme.primary),
-                const SizedBox(width: 10),
-                const Text('游戏预览帮助',
-                    style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600)),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close, color: AppTheme.textSecondary),
-                  onPressed: () => Navigator.pop(ctx),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.help_outline,
+                      size: 22,
+                      color: AppTheme.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        '游戏预览帮助',
+                        style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppTheme.textSecondary,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _helpItem(
+                  Icons.sports_esports,
+                  '游戏操作',
+                  '使用键盘方向键或触摸拖动来控制游戏。部分游戏支持自动开火。',
+                ),
+                _helpItem(
+                  Icons.code,
+                  '代码标签',
+                  '查看和编辑生成的 HTML/JS 代码。修改后点击应用即可预览效果。',
+                ),
+                _helpItem(
+                  Icons.palette,
+                  '素材标签',
+                  '查看游戏中使用的颜色、对象和外部资源。点击色块或对象可以编辑替换，还可使用 AI 生成图片素材。',
+                ),
+                _helpItem(Icons.info, '信息标签', '查看项目基本信息。'),
+                _helpItem(Icons.volume_up, '音频设置', '右上角音符图标可以调整游戏音频设置。'),
+                _helpItem(
+                  Icons.refresh,
+                  '重新生成',
+                  '右上角菜单选择"重新生成"，AI 将使用相同设定重新生成游戏。',
+                ),
+                _helpItem(
+                  Icons.arrow_back,
+                  '返回工作台',
+                  '左上角返回箭头可回到工作台，修改游戏设定后再次生成。',
+                ),
+                _helpItem(Icons.help_outline, '帮助', '右上角菜单选择"帮助"查看此说明。'),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.outlineDark),
+                    ),
+                    child: const Text('知道了'),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            _helpItem(Icons.sports_esports, '游戏操作',
-                '使用键盘方向键或触摸拖动来控制游戏。部分游戏支持自动开火。'),
-            _helpItem(Icons.code, '代码标签',
-                '查看和编辑生成的 HTML/JS 代码。修改后点击应用即可预览效果。'),
-            _helpItem(Icons.palette, '素材标签',
-                '查看游戏中使用的颜色、对象和外部资源。点击色块或对象可以编辑替换，还可使用 AI 生成图片素材。'),
-            _helpItem(Icons.info, '信息标签', '查看项目基本信息。'),
-            _helpItem(Icons.volume_up, '音频设置',
-                '右上角音符图标可以调整游戏音频设置。'),
-            _helpItem(Icons.refresh, '重新生成',
-                '右上角菜单选择"重新生成"，AI 将使用相同设定重新生成游戏。'),
-            _helpItem(Icons.arrow_back, '返回工作台',
-                '左上角返回箭头可回到工作台，修改游戏设定后再次生成。'),
-            _helpItem(Icons.help_outline, '帮助',
-                '右上角菜单选择"帮助"查看此说明。'),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textSecondary,
-                  side: const BorderSide(color: AppTheme.outlineDark),
-                ),
-                child: const Text('知道了'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -492,15 +544,22 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(desc,
-                    style: const TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 12)),
+                Text(
+                  desc,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
@@ -514,53 +573,69 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceVariant,
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.music_note, color: AppTheme.primary, size: 20),
-            const SizedBox(width: 8),
-            const Text('游戏音频设置',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              '当前游戏的音频由 Web Audio API 驱动。\n\n'
-              '音效提示：\n'
-              '• 游戏中内置了音效（射击、跳跃、收集等）\n'
-              '• 音效通过代码中的 audioCtx / playTone 函数生成\n'
-              '• 如需背景音乐，可回到工作台修改"音乐氛围"设定\n'
-              '• 素材标签页中可使用 AI 生成音频资源 URL',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () {
-                AudioBridge().stop();
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('已停止所有游戏音频'),
-                    backgroundColor: AppTheme.primary,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.stop, size: 16),
-              label: const Text('停止所有音频'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
-                side: const BorderSide(color: Colors.redAccent),
+            Icon(Icons.music_note, color: AppTheme.primary, size: 20),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '游戏音频设置',
+                style: TextStyle(color: AppTheme.textPrimary, fontSize: 16),
               ),
             ),
           ],
         ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.55,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '当前游戏的音频由 Web Audio API 驱动。\n\n'
+                  '音效提示：\n'
+                  '• 游戏中内置了音效（射击、跳跃、收集等）\n'
+                  '• 音效通过代码中的 audioCtx / playTone 函数生成\n'
+                  '• 如需背景音乐，可回到工作台修改"音乐氛围"设定\n'
+                  '• 素材标签页中可使用 AI 生成音频资源 URL',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      AudioBridge().stop();
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('已停止所有游戏音频'),
+                          backgroundColor: AppTheme.primary,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.stop, size: 16),
+                    label: const Text('停止所有音频'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('关闭',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              '关闭',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
         ],
       ),
@@ -597,7 +672,8 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
     );
 
     // Inject the GameForge bridge object into the game's JS context
-    controller.evaluateJavascript(source: '''
+    controller.evaluateJavascript(
+      source: '''
       if (!window.GameForge) {
         window.GameForge = {
           playAudio: function(url, loop) {
@@ -611,12 +687,14 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
           }
         };
       }
-    ''');
+    ''',
+    );
     // Inject a fallback fix for games that get stuck on the title screen.
     // On iOS WKWebView, touchstart.preventDefault() suppresses the click
     // event needed for "tap to start".  This patch catches that edge case
     // so touching the canvas restarts the game from any non-playing state.
-    controller.evaluateJavascript(source: '''
+    controller.evaluateJavascript(
+      source: '''
       (function(){
         var c=document.getElementById('g')||document.querySelector('canvas');
         if(!c)return;
@@ -629,7 +707,8 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
           } catch(_) {}
         },{passive:false});
       })();
-    ''');
+    ''',
+    );
   }
 }
 
@@ -642,26 +721,19 @@ class _InfoTab extends ConsumerWidget {
     return Container(
       color: AppTheme.bgDark,
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: ListView(
         children: [
           _infoRow(context, '项目 ID', '${projectId.substring(0, 8)}...'),
-          const SizedBox(height: 12),
           _infoRow(context, '游戏引擎', 'Canvas API'),
-          const SizedBox(height: 12),
           _infoRow(context, '画面控制', '键盘方向键 / 触摸左右'),
-          const SizedBox(height: 12),
           _infoRow(context, '状态', '运行中'),
-          const Spacer(),
-          Center(
-            child: Text(
-              '返回工作台可继续修改游戏创意，\n修改后再次生成将更新预览',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppTheme.textSecondary),
-              textAlign: TextAlign.center,
-            ),
+          const SizedBox(height: 28),
+          Text(
+            '返回工作台可继续修改游戏创意，\n修改后再次生成将更新预览',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -669,20 +741,33 @@ class _InfoTab extends ConsumerWidget {
   }
 
   Widget _infoRow(BuildContext context, String label, String value) {
-    return Row(
-      children: [
-        Text(label,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppTheme.textSecondary)),
-        const Spacer(),
-        Text(value,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppTheme.textPrimary)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 76,
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppTheme.textPrimary),
+              textAlign: TextAlign.right,
+              softWrap: true,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

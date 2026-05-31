@@ -221,7 +221,8 @@ final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
     }
   });
   if (currentAuth.status == AuthStatus.authenticated && currentAuth.user != null) {
-    notifier.init(currentAuth.user!.id);
+    // Defer to avoid modifying StateNotifier state during widget tree building.
+    Future(() => notifier.init(currentAuth.user!.id));
   }
   return notifier;
 });

@@ -26,6 +26,15 @@ class AiProviderRegistry {
     '豆包': DoubaoProvider(),
   };
 
+  /// Apply default configuration from [ModelRouter] (base URLs, etc.).
+  /// Call once at app startup.
+  static Future<void> configureDefaults() async {
+    final chatBaseUrl = await ModelRouter.getBaseUrl(ModelType.chat);
+    if (chatBaseUrl != null && chatBaseUrl.isNotEmpty) {
+      OpenAIProvider.configuredBaseUrl = chatBaseUrl;
+    }
+  }
+
   /// Returns the [AiProvider] for the given provider name.
   /// Falls back to DeepSeek if the name is unknown.
   static AiProvider get(String? providerName) {

@@ -54,10 +54,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
@@ -75,8 +74,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                   Text(
                     _isLogin ? '欢迎回来' : '开始你的游戏创作之旅',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 40),
                   TextFormField(
@@ -99,11 +98,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       labelText: '密码',
                       prefixIcon: const Icon(Icons.lock_outlined),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
                       ),
                     ),
                     obscureText: _obscurePassword,
@@ -126,22 +128,23 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                  ElevatedButton(
-                    onPressed: isLoading ? null : _submit,
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(_isLogin ? '登录' : '注册'),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _submit,
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(_isLogin ? '登录' : '注册'),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => setState(() => _isLogin = !_isLogin),
-                    child: Text(
-                      _isLogin ? '没有账号？立即注册' : '已有账号？去登录',
-                    ),
+                    child: Text(_isLogin ? '没有账号？立即注册' : '已有账号？去登录'),
                   ),
                 ],
               ),

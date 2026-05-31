@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions';
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 
 // ---- CORS helpers ----
 const corsHeaders = {
@@ -25,7 +26,7 @@ serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { messages, temperature = 0.7, max_tokens = 4096 } = body;
+    const { messages, temperature = 0.7, max_tokens = 4096, model = 'deepseek-chat' } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(
@@ -55,33 +56,42 @@ serve(async (req: Request) => {
       }
     }
 
-    // ---- Proxy to DeepSeek ----
-    const apiKey = Deno.env.get('DEEPSEEK_API_KEY');
+    // ---- Route to provider based on model name ----
+    const isGpt = model.startsWith('gpt-');
+    const providerUrl = isGpt ? OPENAI_URL : DEEPSEEK_URL;
+    const apiKeyEnv = isGpt ? 'OPENAI_API_KEY' : 'DEEPSEEK_API_KEY';
+    const apiKey = Deno.env.get(apiKeyEnv);
+
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: 'Server misconfigured: missing API key' }),
+        JSON.stringify({
+          error: `Server misconfigured: missing ${apiKeyEnv} environment variable`,
+          hint: isGpt
+            ? `Set OPENAI_API_KEY in your Supabase project dashboard: https://supabase.com/dashboard/project/_/settings/functions`
+            : `Set DEEPSEEK_API_KEY in your Supabase project dashboard`,
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
-    const deepseekResp = await fetch(DEEPSEEK_URL, {
+    const providerResp = await fetch(providerUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model,
         messages,
         temperature,
         max_tokens,
       }),
     });
 
-    const data = await deepseekResp.json();
+    const data = await providerResp.json();
 
     return new Response(JSON.stringify(data), {
-      status: deepseekResp.status,
+      status: providerResp.status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {

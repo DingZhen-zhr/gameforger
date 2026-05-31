@@ -10,11 +10,7 @@ class AssetPanel extends ConsumerStatefulWidget {
   final String projectId;
   final void Function(String newHtml)? onApplyCode;
 
-  const AssetPanel({
-    super.key,
-    required this.projectId,
-    this.onApplyCode,
-  });
+  const AssetPanel({super.key, required this.projectId, this.onApplyCode});
 
   @override
   ConsumerState<AssetPanel> createState() => _AssetPanelState();
@@ -34,27 +30,38 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
       return Container(
         color: AppTheme.bgDark,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            16 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.palette_outlined,
-                      size: 32,
-                      color: AppTheme.textSecondary.withValues(alpha: 0.5)),
+                  Icon(
+                    Icons.palette_outlined,
+                    size: 32,
+                    color: AppTheme.textSecondary.withValues(alpha: 0.5),
+                  ),
                   const SizedBox(height: 8),
-                  Text('暂无素材',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: AppTheme.textSecondary)),
+                  Text(
+                    '暂无素材',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text('游戏代码中没有检测到图片、音频\n或外部资源，所有内容由 Canvas 绘制',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondary.withValues(alpha: 0.6),
-                          fontSize: 11)),
+                  Text(
+                    '游戏代码中没有检测到图片、音频\n或外部资源，所有内容由 Canvas 绘制',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.textSecondary.withValues(alpha: 0.6),
+                      fontSize: 11,
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   _buildAiGenerateSection(context),
                 ],
@@ -68,7 +75,12 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
     return Container(
       color: AppTheme.bgDark,
       child: ListView(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.fromLTRB(
+          12,
+          12,
+          12,
+          12 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           if (assets.colors.isNotEmpty)
             _buildColorSection(context, html, assets.colors),
@@ -87,7 +99,10 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
   // ─── Color Palette (editable) ──────────────────────────────────────
 
   Widget _buildColorSection(
-      BuildContext context, String html, List<ColorInfo> colors) {
+    BuildContext context,
+    String html,
+    List<ColorInfo> colors,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -110,7 +125,8 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
                       color: c.color,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: AppTheme.outlineDark.withValues(alpha: 0.5)),
+                        color: AppTheme.outlineDark.withValues(alpha: 0.5),
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: c.color.withValues(alpha: 0.4),
@@ -119,8 +135,11 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.edit, size: 12,
-                        color: Colors.white70),
+                    child: const Icon(
+                      Icons.edit,
+                      size: 12,
+                      color: Colors.white70,
+                    ),
                   ),
                 ),
               );
@@ -132,8 +151,9 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
   }
 
   void _editColor(BuildContext context, String html, ColorInfo colorInfo) {
-    final hexController =
-        TextEditingController(text: colorInfo.label.replaceFirst('#', ''));
+    final hexController = TextEditingController(
+      text: colorInfo.label.replaceFirst('#', ''),
+    );
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -149,8 +169,10 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
               ),
             ),
             const SizedBox(width: 10),
-            const Text('编辑颜色',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 15)),
+            const Text(
+              '编辑颜色',
+              style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
+            ),
           ],
         ),
         content: Column(
@@ -159,7 +181,9 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
             TextField(
               controller: hexController,
               style: const TextStyle(
-                  color: AppTheme.textPrimary, fontFamily: 'monospace'),
+                color: AppTheme.textPrimary,
+                fontFamily: 'monospace',
+              ),
               decoration: InputDecoration(
                 prefixText: '#',
                 prefixStyle: const TextStyle(color: AppTheme.textSecondary),
@@ -174,16 +198,22 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
               ),
             ),
             const SizedBox(height: 12),
-            Text('替换所有 "$colorInfo.label" 为新的颜色值',
-                style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 11)),
+            Text(
+              '替换所有 "$colorInfo.label" 为新的颜色值',
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 11,
+              ),
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              '取消',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
           FilledButton(
             onPressed: () {
@@ -193,9 +223,7 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
                 Navigator.pop(ctx);
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
             child: const Text('替换全部'),
           ),
         ],
@@ -214,7 +242,10 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
   // ─── Game Objects (editable) ────────────────────────────────────────
 
   Widget _buildObjectSection(
-      BuildContext context, String html, List<ObjectInfo> objects) {
+    BuildContext context,
+    String html,
+    List<ObjectInfo> objects,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -229,25 +260,35 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
               return GestureDetector(
                 onTap: () => _editObjectName(context, html, o),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceVariant,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: AppTheme.outlineDark.withValues(alpha: 0.4)),
+                      color: AppTheme.outlineDark.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(o.icon, size: 14, color: AppTheme.textSecondary),
                       const SizedBox(width: 6),
-                      Text(o.name,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.textPrimary, fontSize: 11)),
+                      Text(
+                        o.name,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textPrimary,
+                          fontSize: 11,
+                        ),
+                      ),
                       const SizedBox(width: 4),
-                      const Icon(Icons.edit, size: 10,
-                          color: AppTheme.textSecondary),
+                      const Icon(
+                        Icons.edit,
+                        size: 10,
+                        color: AppTheme.textSecondary,
+                      ),
                     ],
                   ),
                 ),
@@ -260,7 +301,10 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
   }
 
   void _editObjectName(
-      BuildContext context, String html, ObjectInfo objectInfo) {
+    BuildContext context,
+    String html,
+    ObjectInfo objectInfo,
+  ) {
     final controller = TextEditingController(text: objectInfo.name);
     showDialog(
       context: context,
@@ -270,8 +314,10 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
           children: [
             Icon(objectInfo.icon, size: 20, color: AppTheme.primary),
             const SizedBox(width: 8),
-            const Text('编辑对象名称',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 15)),
+            const Text(
+              '编辑对象名称',
+              style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
+            ),
           ],
         ),
         content: Column(
@@ -293,16 +339,22 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
               ),
             ),
             const SizedBox(height: 8),
-            Text('注意：重命名可能影响游戏逻辑，请确认代码中的变量名一致',
-                style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 11)),
+            Text(
+              '注意：重命名可能影响游戏逻辑，请确认代码中的变量名一致',
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 11,
+              ),
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              '取消',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
           FilledButton(
             onPressed: () {
@@ -312,9 +364,7 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
                 Navigator.pop(ctx);
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
             child: const Text('重命名'),
           ),
         ],
@@ -333,7 +383,10 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
   // ─── External URLs (editable) ──────────────────────────────────────
 
   Widget _buildUrlSection(
-      BuildContext context, String html, List<UrlInfo> urls) {
+    BuildContext context,
+    String html,
+    List<UrlInfo> urls,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -341,35 +394,46 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
         children: [
           _sectionHeader('外部资源', '点击编辑或替换 URL'),
           const SizedBox(height: 8),
-          ...urls.map((u) => GestureDetector(
-                onTap: () => _editUrl(context, html, u),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 4),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(u.isAudio ? Icons.audiotrack : Icons.image,
-                          size: 16, color: AppTheme.textSecondary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(u.url,
-                            style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 10,
-                                color: AppTheme.textSecondary),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                      const Icon(Icons.edit, size: 12,
-                          color: AppTheme.textSecondary),
-                    ],
-                  ),
+          ...urls.map(
+            (u) => GestureDetector(
+              onTap: () => _editUrl(context, html, u),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(6),
                 ),
-              )),
+                child: Row(
+                  children: [
+                    Icon(
+                      u.isAudio ? Icons.audiotrack : Icons.image,
+                      size: 16,
+                      color: AppTheme.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        u.url,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                          color: AppTheme.textSecondary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.edit,
+                      size: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -383,17 +447,25 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
         backgroundColor: AppTheme.surfaceVariant,
         title: Row(
           children: [
-            Icon(urlInfo.isAudio ? Icons.audiotrack : Icons.image,
-                color: AppTheme.primary, size: 18),
+            Icon(
+              urlInfo.isAudio ? Icons.audiotrack : Icons.image,
+              color: AppTheme.primary,
+              size: 18,
+            ),
             const SizedBox(width: 8),
-            const Text('编辑资源 URL',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 15)),
+            const Text(
+              '编辑资源 URL',
+              style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
+            ),
           ],
         ),
         content: TextField(
           controller: controller,
           style: const TextStyle(
-              color: AppTheme.textPrimary, fontFamily: 'monospace', fontSize: 12),
+            color: AppTheme.textPrimary,
+            fontFamily: 'monospace',
+            fontSize: 12,
+          ),
           maxLines: 3,
           decoration: InputDecoration(
             hintText: '输入新的资源 URL',
@@ -409,8 +481,10 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              '取消',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
           FilledButton(
             onPressed: () {
@@ -424,9 +498,7 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
                 Navigator.pop(ctx);
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
             child: const Text('替换'),
           ),
         ],
@@ -442,22 +514,23 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
       decoration: BoxDecoration(
         color: AppTheme.surfaceVariant.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-            color: AppTheme.outlineDark.withValues(alpha: 0.3)),
+        border: Border.all(color: AppTheme.outlineDark.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome,
-                  size: 16, color: AppTheme.primary),
+              const Icon(Icons.auto_awesome, size: 16, color: AppTheme.primary),
               const SizedBox(width: 8),
-              const Text('AI 图片生成',
-                  style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600)),
+              const Text(
+                'AI 图片生成',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const Spacer(),
               if (_isGenerating)
                 const SizedBox(
@@ -474,43 +547,48 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
           if (_generationError != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text(_generationError!,
-                  style: const TextStyle(
-                      color: Colors.redAccent, fontSize: 11)),
+              child: Text(
+                _generationError!,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+              ),
             ),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 36,
-                  child: TextField(
-                    style: const TextStyle(
-                        color: AppTheme.textPrimary, fontSize: 12),
-                    decoration: InputDecoration(
-                      hintText: '描述你要生成的图片素材...',
-                      hintStyle: const TextStyle(
-                          color: AppTheme.textTertiary, fontSize: 12),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
-                      filled: true,
-                      fillColor: AppTheme.surfaceVariant,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onSubmitted: (prompt) => _generateImage(prompt),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 320;
+              final input = TextField(
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 12,
+                ),
+                minLines: 1,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: '描述你要生成的图片素材...',
+                  hintStyle: const TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 12,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  filled: true,
+                  fillColor: AppTheme.surfaceVariant,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
+                onSubmitted: (prompt) => _generateImage(prompt),
+              );
+
+              final button = SizedBox(
                 height: 36,
+                width: compact ? double.infinity : null,
                 child: FilledButton.icon(
                   onPressed: _isGenerating
                       ? null
                       : () {
-                          // Focus the text field first... simplified: use a dialog
                           _showGenerateDialog(context);
                         },
                   icon: const Icon(Icons.image, size: 16),
@@ -518,10 +596,27 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
+                    minimumSize: const Size(72, 36),
                   ),
                 ),
-              ),
-            ],
+              );
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [input, const SizedBox(height: 8), button],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: input),
+                  const SizedBox(width: 8),
+                  button,
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -534,58 +629,74 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceVariant,
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.auto_awesome,
-                color: AppTheme.primary, size: 20),
-            const SizedBox(width: 8),
-            const Text('AI 生成图片素材',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              '描述你想要生成的图片，AI 将为你创建游戏素材。\n\n'
-              '支持 DALL·E 3、Stable Diffusion、Flux、Ideogram、Gemini、豆包。\n'
-              '需要在「设置 → API 配置」中配置相应的 API Key。',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: promptController,
-              autofocus: true,
-              maxLines: 3,
-              style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: '例如：pixel art game character, 32x32, side view, spaceship with neon glow, dark background',
-                hintStyle:
-                    const TextStyle(color: AppTheme.textTertiary, fontSize: 12),
-                filled: true,
-                fillColor: AppTheme.surfaceVariant,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
+            Icon(Icons.auto_awesome, color: AppTheme.primary, size: 20),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'AI 生成图片素材',
+                style: TextStyle(color: AppTheme.textPrimary, fontSize: 16),
               ),
             ),
           ],
         ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.55,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '描述你想要生成的图片，AI 将为你创建游戏素材。\n\n'
+                  '支持 DALL·E 3、Stable Diffusion、Flux、Ideogram、Gemini、豆包。\n'
+                  '需要在「设置 → API 配置」中配置相应的 API Key。',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: promptController,
+                  autofocus: true,
+                  maxLines: 4,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                  ),
+                  decoration: InputDecoration(
+                    hintText:
+                        '例如：pixel art game character, 32x32, side view, neon spaceship',
+                    hintStyle: const TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 12,
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.surfaceVariant,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              '取消',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
               _generateImage(promptController.text.trim());
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
             child: const Text('开始生成'),
           ),
         ],
@@ -605,7 +716,8 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
       final apiKey = await ModelRouter.getApiKey(ModelType.image);
       if (apiKey.isEmpty) {
         setState(() {
-          _generationError = '请先在「设置 → API 配置」中配置图片生成 API Key'
+          _generationError =
+              '请先在「设置 → API 配置」中配置图片生成 API Key'
               '\n支持 Stability AI 或 OpenAI (DALL·E 3)';
         });
         return;
@@ -637,8 +749,7 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
   }
 
   Widget _buildGeneratedImage(BuildContext context) {
-    final isBase64 =
-        _generatedImageUrl!.startsWith('data:image');
+    final isBase64 = _generatedImageUrl!.startsWith('data:image');
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -662,20 +773,24 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
                       height: 100,
                       color: AppTheme.surfaceVariant,
                       child: const Center(
-                          child: Icon(Icons.broken_image,
-                              color: AppTheme.textSecondary)),
+                        child: Icon(
+                          Icons.broken_image,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
                     ),
                   ),
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _actionChip(
                 icon: Icons.code,
                 label: '嵌入代码',
                 onTap: () => _embedImageInCode(),
               ),
-              const SizedBox(width: 8),
               _actionChip(
                 icon: Icons.delete_outline,
                 label: '清除',
@@ -693,7 +808,8 @@ class _AssetPanelState extends ConsumerState<AssetPanel> {
     final html = ref.read(previewProvider(widget.projectId)).htmlCode;
 
     // Embed as a JS image loader in the game
-    final imageLoader = '''
+    final imageLoader =
+        '''
 <script>
 // AI-generated game asset
 const aiGeneratedImage = new Image();
@@ -732,9 +848,13 @@ aiGeneratedImage.src = '$_generatedImageUrl';
             children: [
               Icon(icon, size: 12, color: AppTheme.textSecondary),
               const SizedBox(width: 4),
-              Text(label,
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 11)),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
             ],
           ),
         ),
@@ -746,17 +866,26 @@ aiGeneratedImage.src = '$_generatedImageUrl';
 
   Widget _sectionHeader(String title, String subtitle) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 11,
-                fontWeight: FontWeight.w600)),
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(width: 8),
-        Text(subtitle,
+        Expanded(
+          child: Text(
+            subtitle,
             style: TextStyle(
-                color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                fontSize: 10)),
+              color: AppTheme.textSecondary.withValues(alpha: 0.5),
+              fontSize: 10,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -768,8 +897,7 @@ aiGeneratedImage.src = '$_generatedImageUrl';
     final objects = <ObjectInfo>[];
     final urls = <UrlInfo>[];
 
-    final hexPattern =
-        RegExp("'#([0-9a-fA-F]{3,8})'|\"#([0-9a-fA-F]{3,8})\"");
+    final hexPattern = RegExp("'#([0-9a-fA-F]{3,8})'|\"#([0-9a-fA-F]{3,8})\"");
     final seenColors = <String>{};
     for (final match in hexPattern.allMatches(html)) {
       final hex = (match.group(1) ?? match.group(2))!;
@@ -826,19 +954,19 @@ aiGeneratedImage.src = '$_generatedImageUrl';
       final url = match.group(0)!;
       if (urls.length >= 6) break;
       if (!urls.any((u) => u.url == url)) {
-        urls.add(UrlInfo(
-          url: url,
-          isAudio:
-              url.contains('.mp3') || url.contains('.wav') || url.contains('.ogg'),
-        ));
+        urls.add(
+          UrlInfo(
+            url: url,
+            isAudio:
+                url.contains('.mp3') ||
+                url.contains('.wav') ||
+                url.contains('.ogg'),
+          ),
+        );
       }
     }
 
-    return _AssetData(
-      colors: colors,
-      objects: objects,
-      externalUrls: urls,
-    );
+    return _AssetData(colors: colors, objects: objects, externalUrls: urls);
   }
 
   static Color _hexToColor(String hex) {
@@ -876,6 +1004,5 @@ class _AssetData {
     this.externalUrls = const [],
   });
 
-  bool get isEmpty =>
-      colors.isEmpty && objects.isEmpty && externalUrls.isEmpty;
+  bool get isEmpty => colors.isEmpty && objects.isEmpty && externalUrls.isEmpty;
 }

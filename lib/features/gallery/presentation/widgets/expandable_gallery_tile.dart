@@ -74,8 +74,11 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
   @override
   Widget build(BuildContext context) {
     final daysAgo = DateTime.now().difference(widget.project.updatedAt).inDays;
-    final timeStr =
-        daysAgo == 0 ? '今天' : daysAgo == 1 ? '昨天' : '$daysAgo 天前';
+    final timeStr = daysAgo == 0
+        ? '今天'
+        : daysAgo == 1
+        ? '昨天'
+        : '$daysAgo 天前';
 
     return AnimatedBuilder(
       animation: _ctrl,
@@ -93,8 +96,7 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (t > 0.01)
-                _buildPreviewPanel(previewHeight, panelOpacity, t),
+              if (t > 0.01) _buildPreviewPanel(previewHeight, panelOpacity, t),
               _buildCard(timeStr),
             ],
           ),
@@ -123,12 +125,15 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
               color: Colors.white.withValues(alpha: 0.12),
               width: 1,
             ),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           ),
-          child: Opacity(
-            opacity: opacity.clamp(0.0, 1.0),
-            child: _buildPreviewContent(),
+          child: ClipRect(
+            child: height < 96
+                ? const SizedBox.shrink()
+                : Opacity(
+                    opacity: opacity.clamp(0.0, 1.0),
+                    child: _buildPreviewContent(),
+                  ),
           ),
         ),
       ),
@@ -143,8 +148,8 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primary.withValues(alpha: 0.15),
-                AppTheme.secondary.withValues(alpha: 0.1),
+                AppTheme.tabGallery.withValues(alpha: 0.16),
+                AppTheme.secondary.withValues(alpha: 0.08),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -158,12 +163,12 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withValues(alpha: 0.15),
+                    color: AppTheme.tabGallery.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
                     Icons.play_circle_fill_rounded,
-                    color: AppTheme.primary,
+                    color: AppTheme.tabGallery,
                     size: 30,
                   ),
                 ),
@@ -194,8 +199,7 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
           child: _MiniGlassButton(
             icon: Icons.open_in_full,
             label: '完整预览',
-            onTap: () =>
-                context.push('/project/${widget.project.id}/preview'),
+            onTap: () => context.push('/project/${widget.project.id}/preview'),
           ),
         ),
       ],
@@ -205,8 +209,9 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
   Widget _buildCard(String timeStr) {
     return Dismissible(
       key: ValueKey(widget.project.id),
-      direction:
-          widget.isExpanded ? DismissDirection.none : DismissDirection.endToStart,
+      direction: widget.isExpanded
+          ? DismissDirection.none
+          : DismissDirection.endToStart,
       confirmDismiss: (_) async {
         widget.onDelete();
         return false;
@@ -223,11 +228,14 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
           children: [
             Icon(Icons.delete_outline, color: Colors.white, size: 20),
             SizedBox(width: 6),
-            Text('删除',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600)),
+            Text(
+              '删除',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -292,12 +300,12 @@ class _GlassTileCardState extends State<_GlassTileCard> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.12),
+                        color: AppTheme.tabGallery.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.play_circle_fill_rounded,
-                        color: AppTheme.primary,
+                        color: AppTheme.tabGallery,
                         size: 22,
                       ),
                     ),
@@ -306,14 +314,20 @@ class _GlassTileCardState extends State<_GlassTileCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(widget.project.title,
-                              style: Theme.of(context).textTheme.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
+                          Text(
+                            widget.project.title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           const SizedBox(height: 3),
-                          Text('${widget.timeStr} 生成',
-                              style: const TextStyle(
-                                  color: AppTheme.textSecondary, fontSize: 13)),
+                          Text(
+                            '${widget.timeStr} 生成',
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -321,8 +335,11 @@ class _GlassTileCardState extends State<_GlassTileCard> {
                       turns: widget.isExpanded ? 0.25 : 0,
                       duration: const Duration(milliseconds: 300),
                       curve: GlassUtils.iosSpringCurve,
-                      child: const Icon(Icons.chevron_right,
-                          color: AppTheme.textTertiary, size: 20),
+                      child: const Icon(
+                        Icons.chevron_right,
+                        color: AppTheme.textTertiary,
+                        size: 20,
+                      ),
                     ),
                   ],
                 ),
@@ -366,11 +383,14 @@ class _MiniGlassButton extends StatelessWidget {
                 children: [
                   Icon(icon, size: 13, color: AppTheme.textPrimary),
                   const SizedBox(width: 4),
-                  Text(label,
-                      style: const TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500)),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),

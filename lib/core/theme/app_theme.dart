@@ -4,26 +4,30 @@ class AppTheme {
   AppTheme._();
 
   // iOS Dark Mode system colors
-  static const Color primary = Color(0xFF0A84FF);          // iOS systemBlue
-  static const Color primaryContainer = Color(0xFF0040DD);  // darker systemBlue
-  static const Color secondary = Color(0xFF5AC8FA);         // iOS systemTeal
+  static const Color primary = Color(0xFF0A84FF); // iOS systemBlue
+  static const Color primaryContainer = Color(0xFF0040DD); // darker systemBlue
+  static const Color secondary = Color(0xFF5AC8FA); // iOS systemTeal
   static const Color secondaryContainer = Color(0xFF0071A4);
-  static const Color bgDark = Color(0xFF000000);            // iOS systemBackground
-  static const Color surfaceDark = Color(0xFF1C1C1E);      // iOS groupedBackground
-  static const Color surfaceVariant = Color(0xFF2C2C2E);   // iOS groupedSurface
-  static const Color outlineDark = Color(0xFF38383A);      // iOS separator
-  static const Color textPrimary = Color(0xFFFFFFFF);      // iOS label
-  static const Color textSecondary = Color(0xFF98989D);    // iOS secondaryLabel
-  static const Color textTertiary = Color(0xFF6D6D72);     // iOS tertiaryLabel
-  static const Color error = Color(0xFFFF453A);            // iOS systemRed
-  static const Color gold = Color(0xFFFFD60A);             // iOS systemYellow
+  static const Color tabProject = Color(0xFF0A84FF);
+  static const Color tabGallery = Color(0xFFBF5AF2);
+  static const Color tabSettings = Color(0xFF30D158);
+  static const Color warmAccent = Color(0xFFFF9F0A);
+  static const Color bgDark = Color(0xFF000000); // iOS systemBackground
+  static const Color surfaceDark = Color(0xFF1C1C1E); // iOS groupedBackground
+  static const Color surfaceVariant = Color(0xFF2C2C2E); // iOS groupedSurface
+  static const Color outlineDark = Color(0xFF38383A); // iOS separator
+  static const Color textPrimary = Color(0xFFFFFFFF); // iOS label
+  static const Color textSecondary = Color(0xFF98989D); // iOS secondaryLabel
+  static const Color textTertiary = Color(0xFF6D6D72); // iOS tertiaryLabel
+  static const Color error = Color(0xFFFF453A); // iOS systemRed
+  static const Color gold = Color(0xFFFFD60A); // iOS systemYellow
 
   // iOS 26 Liquid Glass surface colors (semi-transparent overlays)
-  static const Color glassClear = Color(0x1AFFFFFF);       // ~10% white overlay
-  static const Color glassTinted = Color(0x29FFFFFF);      // ~16% white overlay
-  static const Color glassStrong = Color(0x3DFFFFFF);      // ~24% white overlay
-  static const Color glassBorder = Color(0x33FFFFFF);      // ~20% white border
-  static const Color glassShadow = Color(0x1A000000);      // subtle dark shadow
+  static const Color glassClear = Color(0x1AFFFFFF); // ~10% white overlay
+  static const Color glassTinted = Color(0x29FFFFFF); // ~16% white overlay
+  static const Color glassStrong = Color(0x3DFFFFFF); // ~24% white overlay
+  static const Color glassBorder = Color(0x33FFFFFF); // ~20% white border
+  static const Color glassShadow = Color(0x1A000000); // subtle dark shadow
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -70,8 +74,14 @@ class AppTheme {
         unselectedItemColor: textSecondary,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-        unselectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
+        selectedLabelStyle: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w400,
+        ),
       ),
 
       // --- Cards ---
@@ -79,9 +89,7 @@ class AppTheme {
         color: surfaceDark,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
 
       // --- Buttons ---
@@ -89,7 +97,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 50),
+          minimumSize: const Size(64, 50),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -105,7 +113,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: primary,
           side: const BorderSide(color: primary),
-          minimumSize: const Size(double.infinity, 50),
+          minimumSize: const Size(64, 50),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -116,8 +124,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surfaceVariant,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -149,9 +159,7 @@ class AppTheme {
       // --- Dialog ---
       dialogTheme: DialogThemeData(
         backgroundColor: surfaceVariant,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titleTextStyle: const TextStyle(
           color: textPrimary,
           fontSize: 17,

@@ -620,6 +620,18 @@ class WorkspaceNotifier extends StateNotifier<WorkspaceState> {
     state = state.copyWith(messages: [...state.messages, msg]);
   }
 
+  /// Add a summary message from the preview-page AI chat, so the
+  /// conversation continuity is preserved when returning to the workspace.
+  void addPreviewChatMessage(String userMessage, String aiResponse) {
+    final msg = ChatMessage(
+      id: _genId(),
+      role: MessageRole.system,
+      content: '💬 预览对话\n\n**你**: $userMessage\n\n**AI**: ${aiResponse.length > 200 ? '${aiResponse.substring(0, 200)}...' : aiResponse}',
+      timestamp: DateTime.now(),
+    );
+    state = state.copyWith(messages: [...state.messages, msg]);
+  }
+
   /// Re-discuss a dimension via Socratic dialogue.
   /// Sets the current dimension index back to the requested one and
   /// asks the AI a follow-up question about that dimension.

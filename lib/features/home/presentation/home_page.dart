@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/glass_utils.dart';
+import '../../../core/widgets/liquid_glass.dart';
 import '../../gallery/presentation/gallery_page.dart';
 import '../../settings/presentation/settings_page.dart';
 import '../providers/home_provider.dart';
@@ -18,6 +18,27 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   int _currentTab = 0;
+
+  static const _tabs = [
+    GlassTabItem(
+      icon: Icons.dashboard_outlined,
+      selectedIcon: Icons.dashboard_rounded,
+      label: '项目',
+      accent: AppTheme.tabProject,
+    ),
+    GlassTabItem(
+      icon: Icons.play_circle_outline_rounded,
+      selectedIcon: Icons.play_circle_fill_rounded,
+      label: '作品',
+      accent: AppTheme.tabGallery,
+    ),
+    GlassTabItem(
+      icon: Icons.tune_rounded,
+      selectedIcon: Icons.tune_rounded,
+      label: '控制',
+      accent: AppTheme.tabSettings,
+    ),
+  ];
 
   @override
   void initState() {
@@ -59,8 +80,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               final title = ctrl.text.trim();
               if (title.isEmpty) return;
               Navigator.pop(ctx);
-              final project =
-                  await ref.read(homeProvider.notifier).createProject(title);
+              final project = await ref
+                  .read(homeProvider.notifier)
+                  .createProject(title);
               if (project != null && mounted) {
                 context.push('/project/${project.id}/workspace');
               }
@@ -77,188 +99,220 @@ class _HomePageState extends ConsumerState<HomePage> {
     final homeState = ref.watch(homeProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('GameForger'),
-        backgroundColor: AppTheme.surfaceDark.withValues(alpha: 0.72),
-        surfaceTintColor: Colors.transparent,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
-        actions: [
-          if (_currentTab == 0)
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              onPressed: _showNewProjectDialog,
-              child: const Icon(Icons.add, color: AppTheme.primary, size: 26),
-            ),
-        ],
-        bottom: homeState.isOffline
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(28),
-                child: ColoredBox(
-                  color: AppTheme.gold,
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 28,
-                    child: Center(
-                      child: Text('离线模式 — 显示本地缓存数据',
-                          style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500)),
-                    ),
-                  ),
-                ),
-              )
-            : null,
-      ),
-      body: IndexedStack(
-        index: _currentTab,
+      extendBody: true,
+      body: Stack(
         children: [
-          _buildProjectList(homeState),
-          const GalleryPage(),
-          const SettingsPage(),
-        ],
-      ),
-      bottomNavigationBar: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceDark.withValues(alpha: 0.72),
-              border: Border(
-                top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: BottomNavigationBar(
-              currentIndex: _currentTab,
-              onTap: (i) => setState(() => _currentTab = i),
-              backgroundColor: Colors.transparent,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.grid_view_rounded),
-                  label: '项目',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.collections_bookmark_rounded),
-                  label: '作品库',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings_rounded),
-                  label: '设置',
-                ),
+          const _HomeBackdrop(),
+          Positioned.fill(
+            child: IndexedStack(
+              index: _currentTab,
+              children: [
+                _buildProjectsTab(homeState),
+                const GalleryPage(),
+                const SettingsPage(),
               ],
             ),
           ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: FloatingGlassTabBar(
+              currentIndex: _currentTab,
+              onChanged: (i) => setState(() => _currentTab = i),
+              items: _tabs,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjectsTab(HomeState homeState) {
+    return SafeArea(
+      bottom: false,
+      child: RefreshIndicator(
+        onRefresh: () => ref.read(homeProvider.notifier).loadProjects(),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              sliver: SliverToBoxAdapter(child: _buildProjectHero(homeState)),
+            ),
+            if (homeState.isLoading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CupertinoActivityIndicator(radius: 12)),
+              )
+            else if (homeState.error != null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _ProjectErrorState(
+                  message: homeState.error!,
+                  onRetry: () => ref.read(homeProvider.notifier).loadProjects(),
+                ),
+              )
+            else if (homeState.projects.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _ProjectEmptyState(onCreate: _showNewProjectDialog),
+              )
+            else ...[
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+                sliver: SliverToBoxAdapter(
+                  child: GlassSectionHeader(
+                    title: '最近项目',
+                    subtitle: '长按项目可重命名，左滑可删除。',
+                    trailing: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      onPressed: () =>
+                          ref.read(homeProvider.notifier).loadProjects(),
+                      child: const Icon(
+                        Icons.refresh_rounded,
+                        color: AppTheme.tabProject,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 118),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((_, i) {
+                    final project = homeState.projects[i];
+                    return _SwipeableProjectTile(
+                      project: project,
+                      onTap: () =>
+                          context.push('/project/${project.id}/workspace'),
+                      onDelete: () => _confirmDelete(project.id, project.title),
+                      onRename: (title) => ref
+                          .read(homeProvider.notifier)
+                          .renameProject(project.id, title),
+                    );
+                  }, childCount: homeState.projects.length),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildProjectList(HomeState homeState) {
-    if (homeState.isLoading) {
-      return const Center(
-        child: CupertinoActivityIndicator(radius: 12),
-      );
-    }
+  Widget _buildProjectHero(HomeState homeState) {
+    final total = homeState.projects.length;
+    final drafts = homeState.projects.where((p) => p.status == 'draft').length;
+    final generated = homeState.projects
+        .where((p) => p.status == 'generated')
+        .length;
 
-    if (homeState.error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    return LiquidGlassSurface(
+      borderRadius: BorderRadius.circular(32),
+      blurSigma: 28,
+      tintColor: AppTheme.tabProject,
+      tintOpacity: 0.12,
+      borderOpacity: 0.2,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              const Icon(Icons.wifi_off_rounded,
-                  size: 48, color: AppTheme.textTertiary),
-              const SizedBox(height: 16),
-              Text('加载失败',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 6),
-              Text(homeState.error!,
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 13),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 20),
-              CupertinoButton.filled(
-                onPressed: () =>
-                    ref.read(homeProvider.notifier).loadProjects(),
-                child: const Text('重试'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (homeState.projects.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(Icons.gamepad_outlined,
-                    size: 36, color: AppTheme.primary),
-              ),
-              const SizedBox(height: 20),
-              Text('还没有项目',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 6),
-              const Text(
-                '点击右上角 + 开始你的第一个游戏',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 15),
-              ),
-              const SizedBox(height: 24),
-              CupertinoButton.filled(
-                onPressed: _showNewProjectDialog,
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.add, size: 20),
-                    SizedBox(width: 6),
-                    Text('创建项目'),
+                    const Text(
+                      'GameForger',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        height: 1.05,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      homeState.isOffline
+                          ? '本地缓存已接管，继续整理草稿。'
+                          : '把玩法想法推进成可运行的小游戏。',
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    ),
                   ],
                 ),
               ),
+              _StatusPill(
+                label: homeState.isOffline ? '离线' : '在线',
+                icon: homeState.isOffline
+                    ? Icons.cloud_off_rounded
+                    : Icons.cloud_done_rounded,
+                color: homeState.isOffline
+                    ? AppTheme.gold
+                    : AppTheme.tabSettings,
+              ),
             ],
           ),
-        ),
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(0)),
-      child: RefreshIndicator(
-        onRefresh: () => ref.read(homeProvider.notifier).loadProjects(),
-        child: ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          itemCount: homeState.projects.length,
-          itemBuilder: (_, i) {
-            final project = homeState.projects[i];
-            return _SwipeableProjectTile(
-              project: project,
-              onTap: () => context.push('/project/${project.id}/workspace'),
-              onDelete: () => _confirmDelete(project.id, project.title),
-              onRename: (title) =>
-                  ref.read(homeProvider.notifier).renameProject(project.id, title),
-            );
-          },
-        ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: GlassMetricCard(
+                  icon: Icons.folder_copy_rounded,
+                  label: '项目总数',
+                  value: '$total',
+                  hint: generated == 0 ? '等待生成' : '$generated 个已生成',
+                  accent: AppTheme.tabProject,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: GlassMetricCard(
+                  icon: Icons.edit_note_rounded,
+                  label: '草稿',
+                  value: '$drafts',
+                  hint: drafts == 0 ? '可以开新局' : '继续补全设定',
+                  accent: AppTheme.warmAccent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: CupertinoButton(
+                  color: AppTheme.tabProject.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(18),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  onPressed: _showNewProjectDialog,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_rounded, size: 20),
+                      SizedBox(width: 6),
+                      Text(
+                        '新建项目',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              _RoundGlassButton(
+                icon: Icons.sync_rounded,
+                color: AppTheme.tabProject,
+                onTap: () => ref.read(homeProvider.notifier).loadProjects(),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -283,6 +337,174 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: const Text('删除'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HomeBackdrop extends StatelessWidget {
+  const _HomeBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF050507), Color(0xFF0D1117), Color(0xFF000000)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: SizedBox.expand(),
+    );
+  }
+}
+
+class _ProjectErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ProjectErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.wifi_off_rounded,
+            size: 48,
+            color: AppTheme.textTertiary,
+          ),
+          const SizedBox(height: 16),
+          Text('加载失败', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          CupertinoButton.filled(onPressed: onRetry, child: const Text('重试')),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectEmptyState extends StatelessWidget {
+  final VoidCallback onCreate;
+
+  const _ProjectEmptyState({required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          LiquidGlassSurface(
+            borderRadius: BorderRadius.circular(26),
+            tintColor: AppTheme.tabProject,
+            tintOpacity: 0.12,
+            padding: const EdgeInsets.all(18),
+            child: const Icon(
+              Icons.gamepad_outlined,
+              size: 38,
+              color: AppTheme.tabProject,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('还没有项目', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 6),
+          const Text(
+            '创建第一个游戏项目，AI 会从玩法、世界观和素材方向逐步补齐。',
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 15),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          CupertinoButton.filled(
+            onPressed: onCreate,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add, size: 20),
+                SizedBox(width: 6),
+                Text('创建项目'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _StatusPill({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoundGlassButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _RoundGlassButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: LiquidGlassSurface(
+        borderRadius: BorderRadius.circular(18),
+        tintColor: color,
+        tintOpacity: 0.12,
+        padding: const EdgeInsets.all(13),
+        child: Icon(icon, color: color, size: 22),
       ),
     );
   }
@@ -325,19 +547,18 @@ class _SwipeableProjectTile extends StatelessWidget {
             children: [
               Icon(Icons.delete_outline, color: Colors.white, size: 20),
               SizedBox(width: 6),
-              Text('删除',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600)),
+              Text(
+                '删除',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
-        child: _ProjectTile(
-          project: project,
-          onTap: onTap,
-          onRename: onRename,
-        ),
+        child: _ProjectTile(project: project, onTap: onTap, onRename: onRename),
       ),
     );
   }
@@ -364,8 +585,11 @@ class _ProjectTileState extends State<_ProjectTile> {
   @override
   Widget build(BuildContext context) {
     final daysAgo = DateTime.now().difference(widget.project.updatedAt).inDays;
-    final timeStr =
-        daysAgo == 0 ? '今天' : daysAgo == 1 ? '昨天' : '$daysAgo 天前';
+    final timeStr = daysAgo == 0
+        ? '今天'
+        : daysAgo == 1
+        ? '昨天'
+        : '$daysAgo 天前';
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -411,19 +635,28 @@ class _ProjectTileState extends State<_ProjectTile> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(widget.project.title,
-                              style: Theme.of(context).textTheme.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
+                          Text(
+                            widget.project.title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           const SizedBox(height: 3),
-                          Text(timeStr,
-                              style: const TextStyle(
-                                  color: AppTheme.textSecondary, fontSize: 13)),
+                          Text(
+                            timeStr,
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right,
-                        color: AppTheme.textTertiary, size: 20),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: AppTheme.textTertiary,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),

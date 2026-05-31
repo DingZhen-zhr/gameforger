@@ -5,11 +5,15 @@ import '../model_router.dart';
 import 'ai_provider.dart';
 
 class OpenAIProvider extends AiProvider {
+  /// Override for API proxy/relay services.
+  /// Set before making API calls; affects all OpenAIProvider instances.
+  static String configuredBaseUrl = 'https://api.openai.com/v1';
+
   @override
   String get providerName => 'OpenAI';
 
   @override
-  String get baseUrl => 'https://api.openai.com/v1';
+  String get baseUrl => configuredBaseUrl;
 
   @override
   String defaultModel(ModelType type) {
