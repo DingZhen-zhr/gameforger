@@ -18,22 +18,25 @@ class AnthropicProvider extends AiProvider {
         return 'claude-sonnet-4-20250514';
       case ModelType.code:
         return 'claude-opus-4-20250514';
-      case ModelType.image:
       case ModelType.music:
+        return 'claude-sonnet-4-20250514';
+      case ModelType.image:
         return '';
     }
   }
 
-  Dio _createDio(String apiKey) => Dio(BaseOptions(
-        baseUrl: baseUrl,
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01',
-        },
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 120),
-      ));
+  Dio _createDio(String apiKey) => Dio(
+    BaseOptions(
+      baseUrl: baseUrl,
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+      },
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 120),
+    ),
+  );
 
   /// Separates system message from the messages list for Anthropic's API format.
   Map<String, dynamic> _buildRequestBody({
@@ -49,10 +52,7 @@ class AnthropicProvider extends AiProvider {
       if (msg['role'] == 'system') {
         systemPrompt = msg['content'];
       } else {
-        chatMessages.add({
-          'role': msg['role'],
-          'content': msg['content'],
-        });
+        chatMessages.add({'role': msg['role'], 'content': msg['content']});
       }
     }
 
@@ -106,8 +106,8 @@ class AnthropicProvider extends AiProvider {
     return {
       'choices': [
         {
-          'message': {'content': text}
-        }
+          'message': {'content': text},
+        },
       ],
     };
   }
@@ -175,7 +175,7 @@ class AnthropicProvider extends AiProvider {
         'model': defaultModel(ModelType.chat),
         'max_tokens': 1,
         'messages': [
-          {'role': 'user', 'content': 'Hi'}
+          {'role': 'user', 'content': 'Hi'},
         ],
       };
       final response = await dio.post('/messages', data: body);

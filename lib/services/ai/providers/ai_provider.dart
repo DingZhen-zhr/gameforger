@@ -37,7 +37,25 @@ abstract class AiProvider {
     return null;
   }
 
+  /// Generate a music/audio asset from a text prompt.
+  /// Returns an audio URL or a data URL, or null if unsupported.
+  Future<String?> generateMusic({
+    required String prompt,
+    required String apiKey,
+    String? lyrics,
+    bool instrumental = true,
+    String format = 'mp3',
+  }) async {
+    return null;
+  }
+
   /// Test the connection with the given API key.
   /// Returns true if the key is valid.
   Future<bool> testConnection(String apiKey);
+
+  /// Test the connection for a specific route/model type.
+  /// Providers can override this when lightweight checks differ per model.
+  Future<bool> testConnectionForModel(String apiKey, ModelType type) {
+    return testConnection(apiKey);
+  }
 }

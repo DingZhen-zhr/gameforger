@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/game_spec.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cosmic_forge.dart';
 
 class GameSpecProgress extends StatelessWidget {
   final GameSpec spec;
@@ -13,75 +14,125 @@ class GameSpecProgress extends StatelessWidget {
     final items = _items;
     final filled = items.where((e) => e.$2 != null).length;
     final total = items.length;
+    final progress = total == 0 ? 0.0 : filled / total;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceDark,
-          border: Border(
-            bottom: BorderSide(color: AppTheme.outlineDark.withValues(alpha: 0.5)),
-          ),
-        ),
+      child: ForgeGlassCard(
+        padding: const EdgeInsets.all(14),
+        borderRadius: BorderRadius.circular(20),
+        accent: AppTheme.primary,
+        accentOpacity: 0.06,
+        borderOpacity: 0.1,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
-                const Icon(Icons.grid_view_rounded, size: 16, color: AppTheme.secondary),
-                const SizedBox(width: 8),
-                Text(
-                  '游戏创意维度',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
-                      ),
+                const Expanded(
+                  child: Text(
+                    '创意维度 · 能量校准',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
-                const Spacer(),
-                Text(
-                  '$filled / $total',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: filled == total ? AppTheme.primary : AppTheme.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                ForgeChip(
+                  label: '${(progress * 100).round()}%',
+                  tone: progress >= 1
+                      ? ForgeChipTone.online
+                      : ForgeChipTone.violet,
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                height: 24,
-                child: Row(
-                  children: items.map((e) {
-                    final isFilled = e.$2 != null;
-                    return Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        decoration: BoxDecoration(
-                          color: isFilled ? AppTheme.primary : AppTheme.surfaceVariant,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          e.$1,
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: isFilled ? Colors.white : AppTheme.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    );
-                  }).toList(),
+            const SizedBox(height: 12),
+            GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 8,
+              childAspectRatio: 3.8,
+              physics: const NeverScrollableScrollPhysics(),
+              children: items.map((item) {
+                final isFilled = item.$2 != null;
+                return _DimensionEnergy(
+                  label: item.$1,
+                  value: isFilled ? 1 : 0.18,
+                  color: isFilled ? AppTheme.primary : AppTheme.secondary,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '$filled / $total 已锁定',
+                    style: const TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 11,
+                    ),
+                  ),
                 ),
-              ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppTheme.textTertiary,
+                  size: 16,
+                ),
+              ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DimensionEnergy extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+
+  const _DimensionEnergy({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 10.5,
+                ),
+              ),
+            ),
+            Text(
+              '${(value * 100).round()}',
+              style: const TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ForgeEnergyBar(value: value, color: color, height: 3),
+      ],
     );
   }
 }

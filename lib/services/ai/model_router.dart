@@ -12,6 +12,8 @@ enum ProviderType {
   ideogram,
   gemini,
   doubao,
+  minimax,
+  grsai,
 }
 
 /// Maps [ProviderType] to its display name.
@@ -24,21 +26,27 @@ const Map<ProviderType, String> providerTypeNames = {
   ProviderType.ideogram: 'Ideogram',
   ProviderType.gemini: 'Gemini',
   ProviderType.doubao: '豆包',
+  ProviderType.minimax: 'MiniMax',
+  ProviderType.grsai: 'GRS AI',
 };
 
 class ModelRouter {
   static const _storage = FlutterSecureStorage();
 
-  /// Development defaults (no custom API key configured in-app).
+  /// Prototype defaults (no custom API key configured in-app).
   /// Override in Settings → API Configuration at runtime.
-  /// Note: The default key was removed because the previous aicodemirror
-  /// relay key ("sk-ant-api03-...") was returning "Settlement blocked" errors
-  /// for all model names. The app now routes through the Supabase Edge
-  /// Function (ai-deepseek / credits) when no custom key is set.
-  static const Map<ModelType, String> defaultApiKeys = {};
+  /// These are compiled into the client build, so production releases should
+  /// replace them with a backend proxy or environment-injected keys.
+  static const Map<ModelType, String> defaultApiKeys = {
+    ModelType.image: '',
+    ModelType.music: '',
+  };
 
   static const Map<ModelType, String> defaultProviders = {
     ModelType.chat: 'DeepSeek',
+    ModelType.image: 'GRS AI',
+    ModelType.code: 'DeepSeek',
+    ModelType.music: 'MiniMax',
   };
 
   /// Default base URLs for each model type (e.g. API proxy endpoints).
@@ -60,10 +68,8 @@ class ModelRouter {
   }
 
   static String _keyKey(ModelType type) => 'api_key_${type.name}';
-  static String _useCustomKey(ModelType type) =>
-      'use_custom_${type.name}';
-  static String _providerKey(ModelType type) =>
-      'provider_${type.name}';
+  static String _useCustomKey(ModelType type) => 'use_custom_${type.name}';
+  static String _providerKey(ModelType type) => 'provider_${type.name}';
 
   // --------------- API Key Management ---------------
 
@@ -96,6 +102,9 @@ class ModelRouter {
 
   /// Returns the stored provider name for [type] (e.g. "DeepSeek", "OpenAI").
   static Future<String?> getProvider(ModelType type) async {
+    final useCustom = await _storage.read(key: _useCustomKey(type));
+    if (useCustom != 'true') return defaultProviders[type];
+
     final stored = await _storage.read(key: _providerKey(type));
     if (stored != null && stored.isNotEmpty) return stored;
     // Fall back to development default (e.g. Claude).
@@ -130,11 +139,18 @@ class ModelRouter {
         return ProviderType.flux;
       case 'Ideogram':
         return ProviderType.ideogram;
+      case 'Nano Banana':
+      case 'Nano Banana (Gemini)':
       case 'Gemini':
         return ProviderType.gemini;
       case '豆包':
       case 'Doubao':
         return ProviderType.doubao;
+      case 'MiniMax':
+        return ProviderType.minimax;
+      case 'GRS AI':
+      case 'GRSAI':
+        return ProviderType.grsai;
       default:
         return ProviderType.deepseek;
     }
@@ -144,13 +160,21 @@ class ModelRouter {
   static List<String> providersFor(ModelType type) {
     switch (type) {
       case ModelType.chat:
-        return ['DeepSeek', 'OpenAI', 'Claude', 'Gemini', '豆包'];
+        return ['DeepSeek', 'OpenAI', 'Claude', 'Gemini', 'MiniMax'];
       case ModelType.image:
-        return ['DALL·E 3', 'Stable Diffusion', 'Flux', 'Ideogram', 'Gemini', '豆包'];
+        return [
+          'GRS AI',
+          'Nano Banana',
+          'DALL·E 3',
+          'Stable Diffusion',
+          'Flux',
+          'Ideogram',
+          '豆包',
+        ];
       case ModelType.code:
-        return ['DeepSeek', 'Claude', 'OpenAI'];
+        return ['DeepSeek', 'Claude', 'OpenAI', 'Gemini', 'MiniMax'];
       case ModelType.music:
-        return ['Suno', 'Udio'];
+        return ['MiniMax', 'OpenAI', 'Gemini', 'DeepSeek', 'Claude'];
     }
   }
 

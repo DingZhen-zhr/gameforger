@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../services/storage/local_db_service.dart';
+import '../../../../services/supabase/game_build_service.dart';
+import '../../../../services/supabase/supabase_client.dart';
 import '../../data/sample_game.dart';
 import '../../../../services/ai/preview_agent_service.dart';
 import '../../../workspace/presentation/providers/workspace_provider.dart';
@@ -45,10 +47,7 @@ class PreviewChatMessage {
     this.isStreaming = false,
   });
 
-  PreviewChatMessage copyWith({
-    String? content,
-    bool? isStreaming,
-  }) =>
+  PreviewChatMessage copyWith({String? content, bool? isStreaming}) =>
       PreviewChatMessage(
         id: id,
         isUser: isUser,
@@ -82,16 +81,15 @@ class PreviewEditProposal {
     bool? isRejected,
     bool? isApplied,
     String? applyError,
-  }) =>
-      PreviewEditProposal(
-        id: id,
-        oldCode: oldCode,
-        newCode: newCode,
-        isAccepted: isAccepted ?? this.isAccepted,
-        isRejected: isRejected ?? this.isRejected,
-        isApplied: isApplied ?? this.isApplied,
-        applyError: applyError ?? this.applyError,
-      );
+  }) => PreviewEditProposal(
+    id: id,
+    oldCode: oldCode,
+    newCode: newCode,
+    isAccepted: isAccepted ?? this.isAccepted,
+    isRejected: isRejected ?? this.isRejected,
+    isApplied: isApplied ?? this.isApplied,
+    applyError: applyError ?? this.applyError,
+  );
 }
 
 class PreviewState {
@@ -135,20 +133,19 @@ class PreviewState {
     AgentState? agentState,
     List<PreviewEditProposal>? pendingEdits,
     String? agentErrorMessage,
-  }) =>
-      PreviewState(
-        htmlCode: htmlCode ?? this.htmlCode,
-        isFullscreen: isFullscreen ?? this.isFullscreen,
-        selectedTab: selectedTab ?? this.selectedTab,
-        isLoading: isLoading ?? this.isLoading,
-        isOffline: isOffline ?? this.isOffline,
-        isInitialized: isInitialized ?? this.isInitialized,
-        chatMessages: chatMessages ?? this.chatMessages,
-        isChatLoading: isChatLoading ?? this.isChatLoading,
-        agentState: agentState ?? this.agentState,
-        pendingEdits: pendingEdits ?? this.pendingEdits,
-        agentErrorMessage: agentErrorMessage ?? this.agentErrorMessage,
-      );
+  }) => PreviewState(
+    htmlCode: htmlCode ?? this.htmlCode,
+    isFullscreen: isFullscreen ?? this.isFullscreen,
+    selectedTab: selectedTab ?? this.selectedTab,
+    isLoading: isLoading ?? this.isLoading,
+    isOffline: isOffline ?? this.isOffline,
+    isInitialized: isInitialized ?? this.isInitialized,
+    chatMessages: chatMessages ?? this.chatMessages,
+    isChatLoading: isChatLoading ?? this.isChatLoading,
+    agentState: agentState ?? this.agentState,
+    pendingEdits: pendingEdits ?? this.pendingEdits,
+    agentErrorMessage: agentErrorMessage ?? this.agentErrorMessage,
+  );
 }
 
 class PreviewNotifier extends StateNotifier<PreviewState> {
@@ -191,14 +188,37 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
           isInitialized: true,
         );
       } else {
-        await _writeHtmlFile(sampleGameHtml);
-        state = state.copyWith(isInitialized: true);
+        final remoteBuild = await _getLatestRemoteBuild();
+        if (remoteBuild != null && remoteBuild.htmlCode.isNotEmpty) {
+          await _localDb.cacheBuild(
+            projectId,
+            remoteBuild.htmlCode,
+            remoteBuild.specSnapshot,
+          );
+          await _writeHtmlFile(remoteBuild.htmlCode);
+          state = state.copyWith(
+            htmlCode: remoteBuild.htmlCode,
+            isOffline: !online,
+            isInitialized: true,
+          );
+        } else {
+          await _writeHtmlFile(sampleGameHtml);
+          state = state.copyWith(isInitialized: true);
+        }
       }
     } catch (_) {
       // If anything fails (DB, connectivity, file I/O), fall back to the
       // sample game so the user isn't stuck on a loading spinner forever.
       await _writeHtmlFile(sampleGameHtml);
       state = state.copyWith(isInitialized: true);
+    }
+  }
+
+  Future<GameBuildModel?> _getLatestRemoteBuild() async {
+    try {
+      return GameBuildService(SupabaseManager.client).getLatestBuild(projectId);
+    } catch (_) {
+      return null;
     }
   }
 
@@ -239,6 +259,20 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
     _updateCodeInternal(code, clearFilePath: false);
   }
 
+  Future<void> updateCodeAndPersist(String code) async {
+    _updateCodeInternal(code, clearFilePath: false);
+    final spec = _ref.read(workspaceProvider(projectId)).gameSpec;
+    await _localDb.cacheBuild(projectId, code, spec);
+    try {
+      await GameBuildService(
+        SupabaseManager.client,
+      ).saveBuild(projectId, code, spec);
+    } catch (_) {
+      // Local cache is the source of truth for immediate reloads; Supabase can
+      // fail offline or due to auth/network without blocking the preview.
+    }
+  }
+
   void _updateCodeInternal(String code, {required bool clearFilePath}) {
     _writeHtmlFile(code);
     if (clearFilePath) htmlFilePath = null;
@@ -250,10 +284,7 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/game_$projectId.html');
       await file.writeAsString(state.htmlCode);
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject: 'GameForger - 我的游戏',
-      );
+      await Share.shareXFiles([XFile(file.path)], subject: 'GameForger - 我的游戏');
     } catch (_) {
       // sharing failed silently
     }
@@ -290,10 +321,12 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
     try {
       final history = state.chatMessages
           .where((m) => !m.isStreaming && m.content.isNotEmpty)
-          .map((m) => {
-                'role': m.isUser ? 'user' : 'assistant',
-                'content': m.content,
-              })
+          .map(
+            (m) => {
+              'role': m.isUser ? 'user' : 'assistant',
+              'content': m.content,
+            },
+          )
           .toList();
 
       final workspaceState = _ref.read(workspaceProvider(projectId));
@@ -313,12 +346,13 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
 
       // Case 1: Agent proposed structured edits → enter review mode
       if (result.hasEdits) {
-        final proposals =
-            result.edits.map((e) => PreviewEditProposal(
-                  id: e.id,
-                  oldCode: e.oldCode,
-                  newCode: e.newCode,
-                ));
+        final proposals = result.edits.map(
+          (e) => PreviewEditProposal(
+            id: e.id,
+            oldCode: e.oldCode,
+            newCode: e.newCode,
+          ),
+        );
         state = state.copyWith(
           pendingEdits: proposals.toList(),
           agentState: AgentState.reviewing,
@@ -327,7 +361,7 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
       }
       // Case 2: Legacy HTML block (no EDIT blocks) → apply immediately
       else if (result.hasLegacyHtml) {
-        updateCode(result.legacyModifiedHtml!);
+        await updateCodeAndPersist(result.legacyModifiedHtml!);
         state = state.copyWith(
           agentState: AgentState.idle,
           isChatLoading: false,
@@ -350,16 +384,11 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
       }
 
       // Sync to workspace
-      _ref.read(workspaceProvider(projectId).notifier).addPreviewChatMessage(
-            text.trim(),
-            result.message,
-          );
+      _ref
+          .read(workspaceProvider(projectId).notifier)
+          .addPreviewChatMessage(text.trim(), result.message);
     } catch (e) {
-      _updateChatMessage(
-        aiId,
-        'AI 响应失败: $e\n\n请检查网络连接后重试。',
-        false,
-      );
+      _updateChatMessage(aiId, 'AI 响应失败: $e\n\n请检查网络连接后重试。', false);
       state = state.copyWith(
         agentState: AgentState.error,
         agentErrorMessage: e.toString(),
@@ -374,10 +403,7 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
     state = state.copyWith(
       pendingEdits: state.pendingEdits.map((e) {
         if (e.id == editId) {
-          return e.copyWith(
-            isAccepted: true,
-            isRejected: false,
-          );
+          return e.copyWith(isAccepted: true, isRejected: false);
         }
         return e;
       }).toList(),
@@ -388,10 +414,7 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
     state = state.copyWith(
       pendingEdits: state.pendingEdits.map((e) {
         if (e.id == editId) {
-          return e.copyWith(
-            isAccepted: false,
-            isRejected: true,
-          );
+          return e.copyWith(isAccepted: false, isRejected: true);
         }
         return e;
       }).toList(),
@@ -429,14 +452,20 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
     state = state.copyWith(agentState: AgentState.applying);
 
     final agentEdits = accepted
-        .map((e) => AgentEditProposal(id: e.id, oldCode: e.oldCode, newCode: e.newCode))
+        .map(
+          (e) => AgentEditProposal(
+            id: e.id,
+            oldCode: e.oldCode,
+            newCode: e.newCode,
+          ),
+        )
         .toList();
     final result = _agentService.applyEdits(state.htmlCode, agentEdits);
 
     // Always update htmlCode with the result — successful edits are
     // already applied in result.modifiedHtml; only failed edits stay
     // pending with error markers.
-    _writeHtmlFile(result.modifiedHtml);
+    await updateCodeAndPersist(result.modifiedHtml);
     final appliedIds = accepted.map((e) => e.id).toSet();
     final errorMap = {for (final e in result.errors) e.editId: e.message};
 
@@ -455,7 +484,11 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
   }
 
   /// Retry a failed edit with corrected old/new code and apply immediately.
-  void manualRetryEdit(String editId, String correctedOld, String correctedNew) {
+  Future<void> manualRetryEdit(
+    String editId,
+    String correctedOld,
+    String correctedNew,
+  ) async {
     final agentEdit = AgentEditProposal(
       id: editId,
       oldCode: correctedOld,
@@ -464,7 +497,7 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
     final result = _agentService.applyEdits(state.htmlCode, [agentEdit]);
 
     if (result.success) {
-      _writeHtmlFile(result.modifiedHtml);
+      await updateCodeAndPersist(result.modifiedHtml);
       state = state.copyWith(
         htmlCode: result.modifiedHtml,
         pendingEdits: state.pendingEdits.map((e) {
@@ -477,8 +510,9 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
             : AgentState.reviewing,
       );
     } else {
-      final errorMsg =
-          result.errors.isNotEmpty ? result.errors.first.message : '匹配失败';
+      final errorMsg = result.errors.isNotEmpty
+          ? result.errors.first.message
+          : '匹配失败';
       state = state.copyWith(
         pendingEdits: state.pendingEdits.map((e) {
           if (e.id != editId) return e;
@@ -511,5 +545,5 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
 
 final previewProvider =
     StateNotifierProvider.family<PreviewNotifier, PreviewState, String>(
-  (ref, projectId) => PreviewNotifier(projectId, ref),
-);
+      (ref, projectId) => PreviewNotifier(projectId, ref),
+    );

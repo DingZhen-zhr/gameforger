@@ -3,31 +3,33 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  // iOS Dark Mode system colors
-  static const Color primary = Color(0xFF0A84FF); // iOS systemBlue
-  static const Color primaryContainer = Color(0xFF0040DD); // darker systemBlue
-  static const Color secondary = Color(0xFF5AC8FA); // iOS systemTeal
-  static const Color secondaryContainer = Color(0xFF0071A4);
-  static const Color tabProject = Color(0xFF0A84FF);
-  static const Color tabGallery = Color(0xFFBF5AF2);
-  static const Color tabSettings = Color(0xFF30D158);
-  static const Color warmAccent = Color(0xFFFF9F0A);
-  static const Color bgDark = Color(0xFF000000); // iOS systemBackground
-  static const Color surfaceDark = Color(0xFF1C1C1E); // iOS groupedBackground
-  static const Color surfaceVariant = Color(0xFF2C2C2E); // iOS groupedSurface
-  static const Color outlineDark = Color(0xFF38383A); // iOS separator
-  static const Color textPrimary = Color(0xFFFFFFFF); // iOS label
-  static const Color textSecondary = Color(0xFF98989D); // iOS secondaryLabel
-  static const Color textTertiary = Color(0xFF6D6D72); // iOS tertiaryLabel
-  static const Color error = Color(0xFFFF453A); // iOS systemRed
-  static const Color gold = Color(0xFFFFD60A); // iOS systemYellow
+  // Cosmic Forge OS tokens from the Claude handoff.
+  static const Color primary = Color(0xFF7B5CFF);
+  static const Color primaryContainer = Color(0xFF2A1A6A);
+  static const Color secondary = Color(0xFF4FC9E8);
+  static const Color secondaryContainer = Color(0xFF103D4E);
+  static const Color tabProject = Color(0xFF9A7DFF);
+  static const Color tabGallery = Color(0xFF4FC9E8);
+  static const Color tabSettings = Color(0xFFCBB8FF);
+  static const Color warmAccent = Color(0xFFF2C36B);
+  static const Color bgDark = Color(0xFF04030A);
+  static const Color surfaceDark = Color(0xFF0A0916);
+  static const Color surfaceVariant = Color(0xFF14121C);
+  static const Color outlineDark = Color(0xFF272438);
+  static const Color textPrimary = Color(0xFFF4F1FF);
+  static const Color textSecondary = Color(0xB8F4F1FF);
+  static const Color textTertiary = Color(0x73F4F1FF);
+  static const Color error = Color(0xFFFF5A6B);
+  static const Color gold = Color(0xFFF2C36B);
+  static const Color cyan = Color(0xFF9BEAFF);
+  static const Color online = Color(0xFF5BE7A7);
 
-  // iOS 26 Liquid Glass surface colors (semi-transparent overlays)
-  static const Color glassClear = Color(0x1AFFFFFF); // ~10% white overlay
-  static const Color glassTinted = Color(0x29FFFFFF); // ~16% white overlay
-  static const Color glassStrong = Color(0x3DFFFFFF); // ~24% white overlay
-  static const Color glassBorder = Color(0x33FFFFFF); // ~20% white border
-  static const Color glassShadow = Color(0x1A000000); // subtle dark shadow
+  // Liquid Glass surface colors (semi-transparent overlays)
+  static const Color glassClear = Color(0x0FFFFFFF);
+  static const Color glassTinted = Color(0x14FFFFFF);
+  static const Color glassStrong = Color(0x24FFFFFF);
+  static const Color glassBorder = Color(0x1FFFFFFF);
+  static const Color glassShadow = Color(0x7A000000);
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -54,10 +56,10 @@ class AppTheme {
 
       // --- AppBar ---
       appBarTheme: const AppBarTheme(
-        backgroundColor: surfaceDark,
+        backgroundColor: Colors.transparent,
         foregroundColor: textPrimary,
         elevation: 0,
-        scrolledUnderElevation: 0.5,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
           color: textPrimary,
@@ -123,7 +125,7 @@ class AppTheme {
       // --- Text Fields ---
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surfaceVariant,
+        fillColor: glassTinted,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
@@ -138,7 +140,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: primary, width: 1.5),
+          borderSide: const BorderSide(color: secondary, width: 1.2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

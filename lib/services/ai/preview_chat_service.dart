@@ -1,4 +1,5 @@
 import 'deepseek_proxy.dart';
+import 'model_router.dart';
 import '../../features/workspace/domain/game_spec.dart';
 
 class PreviewChatResult {
@@ -88,8 +89,10 @@ new_value: 你提取的新值
 
     final messages = <Map<String, String>>[
       {'role': 'system', 'content': systemPrompt},
-      {'role': 'user',
-       'content': '这是当前游戏的完整 HTML 代码：\n\n```html\n$currentHtml\n```\n\n'},
+      {
+        'role': 'user',
+        'content': '这是当前游戏的完整 HTML 代码：\n\n```html\n$currentHtml\n```\n\n',
+      },
     ];
 
     // Include recent chat history (last 4 exchanges)
@@ -107,6 +110,7 @@ new_value: 你提取的新值
       final buffer = StringBuffer();
       await for (final chunk in _proxy.chatStream(
         messages: messages,
+        modelType: ModelType.code,
         temperature: 0.7,
       )) {
         buffer.write(chunk);
@@ -116,9 +120,7 @@ new_value: 你提取的新值
       final fullContent = buffer.toString();
       return _parseResponse(fullContent);
     } catch (e) {
-      return PreviewChatResult(
-        explanation: '抱歉，AI 服务暂时无法响应。请稍后重试。\n\n错误: $e',
-      );
+      return PreviewChatResult(explanation: '抱歉，AI 服务暂时无法响应。请稍后重试。\n\n错误: $e');
     }
   }
 
@@ -142,11 +144,15 @@ new_value: 你提取的新值
 
     // Clean explanation: remove the HTML block and spec update section
     String explanation = content;
-    explanation = explanation.replaceAll(RegExp(r'```html[\s\S]*?```'), '').trim();
-    explanation = explanation.replaceAll(
-      RegExp(r'---SPEC_UPDATE---[\s\S]*?---END_SPEC_UPDATE---'),
-      '',
-    ).trim();
+    explanation = explanation
+        .replaceAll(RegExp(r'```html[\s\S]*?```'), '')
+        .trim();
+    explanation = explanation
+        .replaceAll(
+          RegExp(r'---SPEC_UPDATE---[\s\S]*?---END_SPEC_UPDATE---'),
+          '',
+        )
+        .trim();
 
     return PreviewChatResult(
       modifiedHtml: modifiedHtml,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/cosmic_forge.dart';
 import '../../../services/credits/credit_service.dart';
 
 class CreditsPage extends ConsumerStatefulWidget {
@@ -81,67 +82,80 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('点数中心')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: AppTheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _error!,
-                      style: const TextStyle(color: AppTheme.textSecondary),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(onPressed: _load, child: const Text('重试')),
-                  ],
-                ),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  16,
-                  16,
-                  16 + MediaQuery.of(context).padding.bottom,
-                ),
-                children: [
-                  _buildBalanceCard(),
-                  const SizedBox(height: 24),
-                  Text('购买点数', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 12),
-                  ..._packages.map(
-                    (pkg) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildPackageCard(pkg),
+      body: CosmicBackground(
+        child: SafeArea(
+          child: _loading
+              ? const Center(child: StarRingLoader(label: '同步点数核心'))
+              : _error != null
+              ? Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: AppTheme.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: AppTheme.textSecondary),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _load,
+                          child: const Text('重试'),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  _buildRulesCard(),
-                  const SizedBox(height: 24),
-                  _buildTransactionHistory(),
-                ],
-              ),
-            ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      10,
+                      16,
+                      16 + MediaQuery.of(context).padding.bottom,
+                    ),
+                    children: [
+                      const _CreditsHeader(),
+                      const SizedBox(height: 16),
+                      _buildBalanceCard(),
+                      const SizedBox(height: 24),
+                      const ForgeSectionLabel(title: '购买点数'),
+                      const SizedBox(height: 12),
+                      ..._packages.map(
+                        (pkg) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildPackageCard(pkg),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildRulesCard(),
+                      const SizedBox(height: 24),
+                      _buildTransactionHistory(),
+                    ],
+                  ),
+                ),
+        ),
+      ),
     );
   }
 
   Widget _buildBalanceCard() {
-    return Card(
+    return ForgeGlassCard(
+      borderRadius: BorderRadius.circular(24),
+      accent: AppTheme.gold,
+      accentOpacity: 0.1,
+      borderOpacity: 0.14,
+      glow: true,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.zero,
         child: Column(
           children: [
             const Icon(Icons.monetization_on, size: 48, color: AppTheme.gold),
@@ -161,9 +175,13 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
   }
 
   Widget _buildPackageCard(_Package pkg) {
-    return Card(
+    return ForgeGlassCard(
+      borderRadius: BorderRadius.circular(20),
+      accent: AppTheme.gold,
+      accentOpacity: 0.055,
+      borderOpacity: 0.1,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -234,9 +252,13 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
   }
 
   Widget _buildRulesCard() {
-    return Card(
+    return ForgeGlassCard(
+      borderRadius: BorderRadius.circular(20),
+      accent: AppTheme.secondary,
+      accentOpacity: 0.045,
+      borderOpacity: 0.08,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -273,9 +295,12 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
         ),
         const SizedBox(height: 8),
         if (_transactions.isEmpty)
-          Card(
+          ForgeGlassCard(
+            borderRadius: BorderRadius.circular(18),
+            accent: AppTheme.gold,
+            accentOpacity: 0.04,
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.zero,
               child: Center(
                 child: Text(
                   '暂无交易记录',
@@ -292,7 +317,11 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
                 : t.type == 'deduction'
                 ? Icons.remove_circle
                 : Icons.refresh;
-            return Card(
+            return ForgeGlassCard(
+              borderRadius: BorderRadius.circular(16),
+              accent: isPositive ? AppTheme.gold : AppTheme.primary,
+              accentOpacity: 0.035,
+              borderOpacity: 0.07,
               child: ListTile(
                 leading: Icon(
                   icon,
@@ -316,6 +345,44 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
               ),
             );
           }),
+      ],
+    );
+  }
+}
+
+class _CreditsHeader extends StatelessWidget {
+  const _CreditsHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        ForgeIconButton(
+          icon: Icons.chevron_left_rounded,
+          onTap: () => Navigator.maybePop(context),
+          tooltip: '返回',
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '点数中心',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                '生成能量与消耗记录',
+                style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

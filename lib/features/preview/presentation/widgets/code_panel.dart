@@ -2,17 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cosmic_forge.dart';
 import '../providers/preview_provider.dart';
 
 class CodePanel extends ConsumerStatefulWidget {
   final String projectId;
   final ValueChanged<String>? onApplyCode;
 
-  const CodePanel({
-    super.key,
-    required this.projectId,
-    this.onApplyCode,
-  });
+  const CodePanel({super.key, required this.projectId, this.onApplyCode});
 
   @override
   ConsumerState<CodePanel> createState() => _CodePanelState();
@@ -39,7 +36,7 @@ class _CodePanelState extends ConsumerState<CodePanel> {
     final state = ref.watch(previewProvider(widget.projectId));
 
     return Container(
-      color: const Color(0xFF0D1117),
+      color: AppTheme.surfaceDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -56,20 +53,34 @@ class _CodePanelState extends ConsumerState<CodePanel> {
 
   Widget _buildHeader(String code) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      color: const Color(0xFF161B22),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.035),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+      ),
       child: Row(
         children: [
-          const Icon(Icons.code, size: 14, color: AppTheme.textSecondary),
-          const SizedBox(width: 8),
-          Text(
-            'index.html',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppTheme.textSecondary),
+          Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              color: AppTheme.gold,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'index.html',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppTheme.textSecondary,
+                fontFamily: 'monospace',
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           if (_isEditing) ...[
             _HeaderButton(
               label: '取消',
@@ -82,24 +93,7 @@ class _CodePanelState extends ConsumerState<CodePanel> {
               primary: true,
             ),
           ] else ...[
-            GestureDetector(
-              onTap: () => _copyCode(context, code),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.outlineDark),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '复制',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
-                        fontSize: 11,
-                      ),
-                ),
-              ),
-            ),
+            _HeaderButton(label: '复制', onTap: () => _copyCode(context, code)),
             const SizedBox(width: 8),
             _HeaderButton(
               label: '编辑',
@@ -187,23 +181,31 @@ class _HeaderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (primary) {
+      return ForgePrimaryButton(
+        label: label,
+        icon: Icons.check_rounded,
+        onPressed: onTap,
+        compact: true,
+      );
+    }
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         decoration: BoxDecoration(
-          color: primary ? AppTheme.primary : null,
-          border: Border.all(
-            color: primary ? AppTheme.primary : AppTheme.outlineDark,
-          ),
-          borderRadius: BorderRadius.circular(4),
+          color: Colors.white.withValues(alpha: 0.045),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.textPrimary,
-                fontSize: 11,
-              ),
+            color: AppTheme.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

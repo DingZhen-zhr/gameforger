@@ -1,29 +1,26 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
+
 import '../model_router.dart';
 import 'ai_provider.dart';
 
-class OpenAIProvider extends AiProvider {
-  /// Override for API proxy/relay services.
-  /// Set before making API calls; affects all OpenAIProvider instances.
-  static String configuredBaseUrl = 'https://api.openai.com/v1';
+class MiniMaxProvider extends AiProvider {
+  @override
+  String get providerName => 'MiniMax';
 
   @override
-  String get providerName => 'OpenAI';
-
-  @override
-  String get baseUrl => configuredBaseUrl;
+  String get baseUrl => 'https://api.minimaxi.com/v1';
 
   @override
   String defaultModel(ModelType type) {
     switch (type) {
       case ModelType.chat:
-        return 'gpt-4o';
       case ModelType.code:
-        return 'gpt-4o';
+        return 'MiniMax-M3';
       case ModelType.music:
-        return 'gpt-4o-mini';
+        return 'music-2.6-free';
       case ModelType.image:
         return '';
     }
@@ -36,8 +33,8 @@ class OpenAIProvider extends AiProvider {
         'Authorization': 'Bearer $apiKey',
         'Content-Type': 'application/json',
       },
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 120),
+      connectTimeout: const Duration(seconds: 90),
+      receiveTimeout: const Duration(seconds: 300),
     ),
   );
 
@@ -110,7 +107,7 @@ class OpenAIProvider extends AiProvider {
     }
 
     final remaining = buffer.toString().trim();
-    if (remaining.isNotEmpty && remaining.startsWith('data: ')) {
+    if (remaining.startsWith('data: ')) {
       final data = remaining.substring(6);
       if (data != '[DONE]') {
         try {
@@ -123,28 +120,69 @@ class OpenAIProvider extends AiProvider {
   }
 
   @override
-  Future<String?> generateImage({
+  Future<String?> generateMusic({
     required String prompt,
     required String apiKey,
-    String size = '1024x1024',
+    String? lyrics,
+    bool instrumental = true,
+    String format = 'mp3',
   }) async {
-    final dio = _createDio(apiKey);
-    final response = await dio.post(
-      '/images/generations',
-      data: {
-        'model': 'dall-e-3',
-        'prompt': prompt,
-        'n': 1,
-        'size': size,
-        'quality': 'standard',
-      },
-    );
-    final data = response.data as Map<String, dynamic>;
-    final images = data['data'] as List?;
-    if (images != null && images.isNotEmpty) {
-      return (images[0] as Map<String, dynamic>)['url'] as String?;
+    final cleanedPrompt = prompt.trim();
+    if (cleanedPrompt.isEmpty) {
+      throw ArgumentError('MiniMax music prompt cannot be empty');
     }
-    return null;
+
+    final normalizedFormat = switch (format.toLowerCase()) {
+      'wav' => 'wav',
+      'pcm' => 'pcm',
+      _ => 'mp3',
+    };
+    final cleanedLyrics = lyrics?.trim();
+
+    final body = <String, dynamic>{
+      'model': defaultModel(ModelType.music),
+      'prompt': cleanedPrompt,
+      'stream': false,
+      'output_format': 'url',
+      'aigc_watermark': false,
+      'is_instrumental': instrumental,
+      'audio_setting': {
+        'sample_rate': 44100,
+        'bitrate': 256000,
+        'format': normalizedFormat,
+      },
+    };
+
+    if (!instrumental) {
+      if (cleanedLyrics != null && cleanedLyrics.isNotEmpty) {
+        body['lyrics'] = cleanedLyrics;
+      } else {
+        body['lyrics_optimizer'] = true;
+      }
+    }
+
+    final dio = _createDio(apiKey);
+    final response = await dio.post('/music_generation', data: body);
+    final data = response.data as Map<String, dynamic>;
+    final baseResp = data['base_resp'] as Map<String, dynamic>?;
+    final statusCode = baseResp?['status_code'] as int?;
+
+    if (statusCode != null && statusCode != 0) {
+      final message = baseResp?['status_msg'] as String? ?? 'unknown error';
+      throw Exception('MiniMax music generation failed: $message');
+    }
+
+    final musicData = data['data'] as Map<String, dynamic>?;
+    final audio = musicData?['audio'] as String?;
+    if (audio == null || audio.isEmpty) return null;
+
+    if (audio.startsWith('http://') ||
+        audio.startsWith('https://') ||
+        audio.startsWith('data:')) {
+      return audio;
+    }
+
+    return _hexAudioToDataUrl(audio, normalizedFormat);
   }
 
   @override
@@ -153,8 +191,38 @@ class OpenAIProvider extends AiProvider {
       final dio = _createDio(apiKey);
       final response = await dio.get('/models');
       return response.statusCode == 200;
-    } catch (_) {
+    } catch (e) {
+      if (e is DioException) {
+        final status = e.response?.statusCode;
+        if (status == 401 || status == 403) return false;
+      }
       return false;
     }
+  }
+
+  @override
+  Future<bool> testConnectionForModel(String apiKey, ModelType type) {
+    // Music generation itself can be slow and may spend quota, so the settings
+    // page only validates the API host/key through the lightweight models call.
+    return testConnection(apiKey);
+  }
+
+  String _hexAudioToDataUrl(String hex, String format) {
+    final normalized = hex.replaceAll(RegExp(r'\s+'), '');
+    if (normalized.length.isOdd) {
+      throw const FormatException('Invalid MiniMax hex audio payload');
+    }
+
+    final bytes = <int>[];
+    for (var i = 0; i < normalized.length; i += 2) {
+      bytes.add(int.parse(normalized.substring(i, i + 2), radix: 16));
+    }
+
+    final mime = format == 'wav'
+        ? 'audio/wav'
+        : format == 'pcm'
+        ? 'audio/L16'
+        : 'audio/mpeg';
+    return 'data:$mime;base64,${base64Encode(bytes)}';
   }
 }

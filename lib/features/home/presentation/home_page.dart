@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/cosmic_forge.dart';
 import '../../../core/widgets/liquid_glass.dart';
 import '../../gallery/presentation/gallery_page.dart';
 import '../../settings/presentation/settings_page.dart';
@@ -102,7 +102,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       extendBody: true,
       body: Stack(
         children: [
-          const _HomeBackdrop(),
+          const CosmicBackground(child: SizedBox.expand()),
           Positioned.fill(
             child: IndexedStack(
               index: _currentTab,
@@ -135,7 +135,16 @@ class _HomePageState extends ConsumerState<HomePage> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: _ProjectsNav(
+                  onRefresh: () =>
+                      ref.read(homeProvider.notifier).loadProjects(),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               sliver: SliverToBoxAdapter(child: _buildProjectHero(homeState)),
             ),
             if (homeState.isLoading)
@@ -160,21 +169,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
                 sliver: SliverToBoxAdapter(
-                  child: GlassSectionHeader(
-                    title: '最近项目',
-                    subtitle: '长按项目可重命名，左滑可删除。',
-                    trailing: CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      onPressed: () =>
-                          ref.read(homeProvider.notifier).loadProjects(),
-                      child: const Icon(
-                        Icons.refresh_rounded,
-                        color: AppTheme.tabProject,
-                        size: 22,
-                      ),
-                    ),
-                  ),
+                  child: ForgeSectionLabel(title: '最近项目', trailing: '按更新时间'),
                 ),
               ),
               SliverPadding(
@@ -208,109 +203,90 @@ class _HomePageState extends ConsumerState<HomePage> {
         .where((p) => p.status == 'generated')
         .length;
 
-    return LiquidGlassSurface(
-      borderRadius: BorderRadius.circular(32),
-      blurSigma: 28,
-      tintColor: AppTheme.tabProject,
-      tintOpacity: 0.12,
-      borderOpacity: 0.2,
-      padding: const EdgeInsets.all(20),
+    return ForgeGlassCard(
+      borderRadius: BorderRadius.circular(24),
+      accent: AppTheme.primary,
+      accentOpacity: 0.08,
+      borderOpacity: 0.12,
+      glow: true,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              const NebulaOrb(size: 46, spin: false),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'GameForger',
+                    Text(
+                      '锻造台已就绪',
                       style: TextStyle(
                         color: AppTheme.textPrimary,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        height: 1.05,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.15,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      homeState.isOffline
-                          ? '本地缓存已接管，继续整理草稿。'
-                          : '把玩法想法推进成可运行的小游戏。',
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 14,
-                        height: 1.35,
-                      ),
+                    const SizedBox(height: 7),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        ForgeChip(
+                          label: homeState.isOffline ? '离线缓存' : '在线',
+                          tone: homeState.isOffline
+                              ? ForgeChipTone.offline
+                              : ForgeChipTone.online,
+                          dot: true,
+                        ),
+                        const ForgeChip(
+                          label: '已登录',
+                          tone: ForgeChipTone.violet,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              _StatusPill(
-                label: homeState.isOffline ? '离线' : '在线',
-                icon: homeState.isOffline
-                    ? Icons.cloud_off_rounded
-                    : Icons.cloud_done_rounded,
-                color: homeState.isOffline
-                    ? AppTheme.gold
-                    : AppTheme.tabSettings,
+              ForgeIconButton(
+                icon: Icons.refresh_rounded,
+                accent: AppTheme.primary,
+                glow: true,
+                onTap: () => ref.read(homeProvider.notifier).loadProjects(),
+                tooltip: '刷新',
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
+          Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
-                child: GlassMetricCard(
-                  icon: Icons.folder_copy_rounded,
-                  label: '项目总数',
-                  value: '$total',
-                  hint: generated == 0 ? '等待生成' : '$generated 个已生成',
-                  accent: AppTheme.tabProject,
-                ),
+                child: _HeroStat(value: '$total', label: '总项目'),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: GlassMetricCard(
-                  icon: Icons.edit_note_rounded,
-                  label: '草稿',
-                  value: '$drafts',
-                  hint: drafts == 0 ? '可以开新局' : '继续补全设定',
-                  accent: AppTheme.warmAccent,
-                ),
+                child: _HeroStat(value: '$drafts', label: '草稿'),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _HeroStat(value: '$generated', label: '已生成'),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: CupertinoButton(
-                  color: AppTheme.tabProject.withValues(alpha: 0.88),
-                  borderRadius: BorderRadius.circular(18),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  onPressed: _showNewProjectDialog,
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_rounded, size: 20),
-                      SizedBox(width: 6),
-                      Text(
-                        '新建项目',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              _RoundGlassButton(
-                icon: Icons.sync_rounded,
-                color: AppTheme.tabProject,
-                onTap: () => ref.read(homeProvider.notifier).loadProjects(),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: ForgePrimaryButton(
+              label: '新建项目',
+              icon: Icons.add_rounded,
+              onPressed: _showNewProjectDialog,
+              accent: AppTheme.primary,
+            ),
           ),
         ],
       ),
@@ -342,20 +318,76 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-class _HomeBackdrop extends StatelessWidget {
-  const _HomeBackdrop();
+class _ProjectsNav extends StatelessWidget {
+  final VoidCallback onRefresh;
+
+  const _ProjectsNav({required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF050507), Color(0xFF0D1117), Color(0xFF000000)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '项目',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  height: 1.05,
+                ),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Cosmic Forge 控制台',
+                style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: SizedBox.expand(),
+        const SizedBox(width: 12),
+        ForgeIconButton(icon: Icons.search_rounded, tooltip: '搜索'),
+        const SizedBox(width: 8),
+        ForgeIconButton(
+          icon: Icons.more_horiz_rounded,
+          onTap: onRefresh,
+          tooltip: '同步',
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroStat extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const _HeroStat({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 23,
+            fontWeight: FontWeight.w800,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(color: AppTheme.textTertiary, fontSize: 11),
+        ),
+      ],
     );
   }
 }
@@ -440,71 +472,6 @@ class _ProjectEmptyState extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  const _StatusPill({
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 14),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoundGlassButton extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _RoundGlassButton({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: LiquidGlassSurface(
-        borderRadius: BorderRadius.circular(18),
-        tintColor: color,
-        tintOpacity: 0.12,
-        padding: const EdgeInsets.all(13),
-        child: Icon(icon, color: color, size: 22),
       ),
     );
   }
@@ -603,64 +570,55 @@ class _ProjectTileState extends State<_ProjectTile> {
         scale: _isPressed ? 0.98 : 1.0,
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeOut,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark.withValues(alpha: 0.75),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.glassBorder, width: 1),
+        child: ForgeGlassCard(
+          borderRadius: BorderRadius.circular(18),
+          padding: const EdgeInsets.all(10),
+          accent: AppTheme.primary,
+          accentOpacity: 0.04,
+          borderOpacity: 0.08,
+          child: Row(
+            children: [
+              NebulaSeed(
+                hue: widget.project.title.hashCode,
+                accent: widget.project.status == 'generated'
+                    ? AppTheme.secondary
+                    : AppTheme.primary,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+                    Text(
+                      widget.project.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
                       ),
-                      child: const Icon(
-                        Icons.videogame_asset_rounded,
-                        color: AppTheme.primary,
-                        size: 22,
-                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.project.title,
-                            style: Theme.of(context).textTheme.titleMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            timeStr,
-                            style: const TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 4),
+                    Text(
+                      '更新于 $timeStr',
+                      style: const TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 11.5,
                       ),
-                    ),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: AppTheme.textTertiary,
-                      size: 20,
                     ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(width: 8),
+              if (widget.project.status == 'draft')
+                const ForgeChip(label: '草稿', tone: ForgeChipTone.draft),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppTheme.textTertiary,
+                size: 18,
+              ),
+            ],
           ),
         ),
       ),

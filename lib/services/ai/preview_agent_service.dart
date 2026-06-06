@@ -1,4 +1,5 @@
 import 'deepseek_proxy.dart';
+import 'model_router.dart';
 import '../../features/workspace/domain/game_spec.dart';
 
 /// A single edit proposed by the AI agent.
@@ -164,7 +165,7 @@ new_value: 新值
       {'role': 'system', 'content': systemPrompt},
       {
         'role': 'user',
-        'content': '这是当前游戏的完整 HTML 代码：\n\n```html\n$currentHtml\n```\n\n'
+        'content': '这是当前游戏的完整 HTML 代码：\n\n```html\n$currentHtml\n```\n\n',
       },
     ];
 
@@ -183,6 +184,7 @@ new_value: 新值
       final buffer = StringBuffer();
       await for (final chunk in _proxy.chatStream(
         messages: messages,
+        modelType: ModelType.code,
         temperature: 0.7,
       )) {
         buffer.write(chunk);
@@ -196,7 +198,8 @@ new_value: 新值
       // Provide helpful hints for known error patterns
       if (msg.contains('missing OPENAI_API_KEY')) {
         return PreviewAgentResult(
-          message: 'AI 服务无法使用 GPT 模型，因为服务器未配置 OpenAI API 密钥。\n\n'
+          message:
+              'AI 服务无法使用 GPT 模型，因为服务器未配置 OpenAI API 密钥。\n\n'
               '解决方法：\n'
               '1. 在「设置 → API 配置」中添加您自己的 OpenAI API Key（推荐）\n'
               '2. 在「设置 → API 配置」中将提供商切换为「DeepSeek」以使用内置服务\n'
@@ -207,12 +210,14 @@ new_value: 新值
           msg.contains('insufficient credits') ||
           msg.contains('点数不足')) {
         return PreviewAgentResult(
-          message: '点数不足，无法使用 AI 服务。\n\n'
+          message:
+              '点数不足，无法使用 AI 服务。\n\n'
               '请充值点数，或在「设置 → API 配置」中添加您自己的 API Key。',
         );
       }
       return PreviewAgentResult(
-        message: '抱歉，AI 服务暂时无法响应。请稍后重试。\n\n'
+        message:
+            '抱歉，AI 服务暂时无法响应。请稍后重试。\n\n'
             '提示：您可以在「设置 → API 配置」中添加自定义 API Key 来获得更稳定的服务。\n\n错误: $e',
       );
     }
@@ -268,11 +273,13 @@ new_value: 新值
         final oldCode = _trimTrailingNewlines(oldBuf.toString());
         final newCode = _trimTrailingNewlines(newBuf.toString());
         if (oldCode.isNotEmpty || newCode.isNotEmpty) {
-          edits.add(AgentEditProposal(
-            id: 'edit_${editIndex++}',
-            oldCode: oldCode,
-            newCode: newCode,
-          ));
+          edits.add(
+            AgentEditProposal(
+              id: 'edit_${editIndex++}',
+              oldCode: oldCode,
+              newCode: newCode,
+            ),
+          );
         }
         inEdit = false;
         inOld = false;
@@ -294,11 +301,13 @@ new_value: 新值
       final oldCode = _trimTrailingNewlines(oldBuf.toString());
       final newCode = _trimTrailingNewlines(newBuf.toString());
       if (oldCode.isNotEmpty || newCode.isNotEmpty) {
-        edits.add(AgentEditProposal(
-          id: 'edit_${editIndex++}',
-          oldCode: oldCode,
-          newCode: newCode,
-        ));
+        edits.add(
+          AgentEditProposal(
+            id: 'edit_${editIndex++}',
+            oldCode: oldCode,
+            newCode: newCode,
+          ),
+        );
       }
     }
 
@@ -345,16 +354,26 @@ new_value: 新值
     if (cleanMessage.isEmpty) {
       // Strip all known block markers from raw content
       cleanMessage = content
-          .replaceAll(RegExp(r'---THINK---[\s\S]*?(?=---EDIT---|---MESSAGE---|---SPEC_UPDATE---|---END_SPEC_UPDATE---|$)'), '')
+          .replaceAll(
+            RegExp(
+              r'---THINK---[\s\S]*?(?=---EDIT---|---MESSAGE---|---SPEC_UPDATE---|---END_SPEC_UPDATE---|$)',
+            ),
+            '',
+          )
           .replaceAll(RegExp(r'---EDIT---|---OLD---|---NEW---|---END---'), '')
-          .replaceAll(RegExp(r'---SPEC_UPDATE---[\s\S]*?---END_SPEC_UPDATE---'), '')
+          .replaceAll(
+            RegExp(r'---SPEC_UPDATE---[\s\S]*?---END_SPEC_UPDATE---'),
+            '',
+          )
           .replaceAll(RegExp(r'```html[\s\S]*?```'), '')
           .trim();
     }
 
     // Extract legacy HTML code block (fallback)
-    final htmlMatch =
-        RegExp(r'```html\s*\n(.*?)```', dotAll: true).firstMatch(content);
+    final htmlMatch = RegExp(
+      r'```html\s*\n(.*?)```',
+      dotAll: true,
+    ).firstMatch(content);
     final legacyHtml = htmlMatch?.group(1)?.trim();
 
     return PreviewAgentResult(
@@ -378,17 +397,18 @@ new_value: 新值
   /// match so that minor indentation / trailing-whitespace differences
   /// don't cause every edit to fail.
   ApplyEditsResult applyEdits(
-      String html, List<AgentEditProposal> acceptedEdits) {
+    String html,
+    List<AgentEditProposal> acceptedEdits,
+  ) {
     String result = html;
     final errors = <ApplyError>[];
 
     for (final edit in acceptedEdits) {
       final match = _tryMatch(result, edit.oldCode);
       if (match == null) {
-        errors.add(ApplyError(
-          editId: edit.id,
-          message: '在代码中未找到匹配的片段，请检查缩进和空格是否一致。',
-        ));
+        errors.add(
+          ApplyError(editId: edit.id, message: '在代码中未找到匹配的片段，请检查缩进和空格是否一致。'),
+        );
         continue;
       }
       // match.matched is the actual substring in result that we need to

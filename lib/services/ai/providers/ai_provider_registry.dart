@@ -8,6 +8,8 @@ import 'flux_provider.dart';
 import 'ideogram_provider.dart';
 import 'gemini_provider.dart';
 import 'doubao_provider.dart';
+import 'minimax_provider.dart';
+import 'grsai_provider.dart';
 
 /// Maps provider name strings to [AiProvider] instances.
 class AiProviderRegistry {
@@ -23,16 +25,20 @@ class AiProviderRegistry {
     'Flux': FluxProvider(),
     'Ideogram': IdeogramProvider(),
     'Gemini': GeminiProvider(),
+    'Nano Banana': GeminiProvider(),
+    'Nano Banana (Gemini)': GeminiProvider(),
     '豆包': DoubaoProvider(),
+    'MiniMax': MiniMaxProvider(),
+    'GRS AI': GrsaiProvider(),
   };
 
   /// Apply default configuration from [ModelRouter] (base URLs, etc.).
   /// Call once at app startup.
   static Future<void> configureDefaults() async {
-    final chatBaseUrl = await ModelRouter.getBaseUrl(ModelType.chat);
-    if (chatBaseUrl != null && chatBaseUrl.isNotEmpty) {
-      OpenAIProvider.configuredBaseUrl = chatBaseUrl;
-    }
+    // Keep OpenAI's public endpoint as the provider default. The platform
+    // fallback proxy is handled by AiProxy when no custom key is configured;
+    // mutating OpenAIProvider here would leak a chat relay base URL into
+    // image/code routes such as DALL·E.
   }
 
   /// Returns the [AiProvider] for the given provider name.

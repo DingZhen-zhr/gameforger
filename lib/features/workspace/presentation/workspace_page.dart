@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/cosmic_forge.dart';
 import '../../../services/ai/game_gen_service.dart';
 import '../../../services/credits/credit_service.dart';
 import '../../../services/storage/local_db_service.dart';
@@ -25,95 +26,91 @@ class WorkspacePage extends ConsumerWidget {
     final state = ref.watch(workspaceProvider(projectId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('思维链工作台'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton.icon(
-              onPressed: state.isSpecComplete
-                  ? () => _generateAndNavigate(
-                      context,
-                      ref,
-                      projectId,
-                      state.gameSpec,
-                      state.isSpecComplete,
-                    )
-                  : null,
-              icon: const Icon(Icons.play_arrow, size: 18),
-              label: const Text('生成'),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: const Size(0, 36),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-          ),
-        ],
-      ),
       resizeToAvoidBottomInset: true,
-      body: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: GameSpecProgress(
-                    spec: state.gameSpec,
-                    onTap: () =>
-                        _showSpecOverview(context, ref, projectId, state),
-                  ),
+      body: CosmicBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              _WorkspaceTopBar(
+                title: '创意工作台',
+                subtitle:
+                    '${state.gameSpec.filledCount} / 9 维度 · ${state.isSpecComplete ? '可生成' : '校准中'}',
+                canGenerate: state.isSpecComplete,
+                onBack: () => context.pop(),
+                onGenerate: () => _generateAndNavigate(
+                  context,
+                  ref,
+                  projectId,
+                  state.gameSpec,
+                  state.isSpecComplete,
                 ),
-                SliverToBoxAdapter(
-                  child: SpecCardsPanel(
-                    spec: state.gameSpec,
-                    filledDimKeys: ref
-                        .read(workspaceProvider(projectId).notifier)
-                        .filledDimKeys,
-                    onEdit: (dimKey, label, currentValue) => _showEditDialog(
-                      context,
-                      ref,
-                      projectId,
-                      dimKey,
-                      label,
-                      currentValue,
-                    ),
-                    onRediscuss: (dimKey, label) => _showRediscussConfirm(
-                      context,
-                      ref,
-                      projectId,
-                      dimKey,
-                      label,
-                    ),
-                  ),
-                ),
-                if (state.messages.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _EmptyState(),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => _ChatBubble(
-                          message: state.messages[i],
-                          projectId: projectId,
+              ),
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+                      sliver: SliverToBoxAdapter(
+                        child: GameSpecProgress(
+                          spec: state.gameSpec,
+                          onTap: () =>
+                              _showSpecOverview(context, ref, projectId, state),
                         ),
-                        childCount: state.messages.length,
                       ),
                     ),
-                  ),
-                // Extra padding at bottom of scroll content
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              ],
-            ),
+                    SliverToBoxAdapter(
+                      child: SpecCardsPanel(
+                        spec: state.gameSpec,
+                        filledDimKeys: ref
+                            .read(workspaceProvider(projectId).notifier)
+                            .filledDimKeys,
+                        onEdit: (dimKey, label, currentValue) =>
+                            _showEditDialog(
+                              context,
+                              ref,
+                              projectId,
+                              dimKey,
+                              label,
+                              currentValue,
+                            ),
+                        onRediscuss: (dimKey, label) => _showRediscussConfirm(
+                          context,
+                          ref,
+                          projectId,
+                          dimKey,
+                          label,
+                        ),
+                      ),
+                    ),
+                    if (state.messages.isEmpty)
+                      const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _EmptyState(),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (_, i) => _ChatBubble(
+                              message: state.messages[i],
+                              projectId: projectId,
+                            ),
+                            childCount: state.messages.length,
+                          ),
+                        ),
+                      ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  ],
+                ),
+              ),
+              const _QuickToolbar(),
+              const _InputBar(),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
           ),
-          const _QuickToolbar(),
-          const _InputBar(),
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
-        ],
+        ),
       ),
     );
   }
@@ -234,6 +231,74 @@ class WorkspacePage extends ConsumerWidget {
   }
 }
 
+class _WorkspaceTopBar extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool canGenerate;
+  final VoidCallback onBack;
+  final VoidCallback onGenerate;
+
+  const _WorkspaceTopBar({
+    required this.title,
+    required this.subtitle,
+    required this.canGenerate,
+    required this.onBack,
+    required this.onGenerate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 10),
+      child: Row(
+        children: [
+          ForgeIconButton(
+            icon: Icons.chevron_left_rounded,
+            onTap: onBack,
+            tooltip: '返回',
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 10.5,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          ForgePrimaryButton(
+            label: '生成',
+            icon: Icons.auto_awesome_rounded,
+            onPressed: canGenerate ? onGenerate : null,
+            compact: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
@@ -290,10 +355,16 @@ class _ChatBubble extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: isUser
-                  ? AppTheme.primary.withValues(alpha: 0.2)
+                  ? AppTheme.primary.withValues(alpha: 0.28)
                   : isSystem
-                  ? AppTheme.surfaceVariant.withValues(alpha: 0.5)
-                  : AppTheme.surfaceVariant,
+                  ? Colors.white.withValues(alpha: 0.045)
+                  : Colors.white.withValues(alpha: 0.055),
+              border: Border.all(
+                color: isUser
+                    ? AppTheme.primary.withValues(alpha: 0.38)
+                    : Colors.white.withValues(alpha: 0.08),
+                width: 0.8,
+              ),
               borderRadius: BorderRadius.circular(16).copyWith(
                 bottomRight: isUser ? const Radius.circular(4) : null,
                 bottomLeft: !isUser && !isSystem
@@ -401,14 +472,8 @@ class _QuickToolbar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        border: Border(
-          top: BorderSide(color: AppTheme.outlineDark.withValues(alpha: 0.5)),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -510,24 +575,28 @@ class _ToolbarChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppTheme.surfaceVariant,
-      borderRadius: BorderRadius.circular(20),
+    return ForgeGlassCard(
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(999),
+      accent: AppTheme.secondary,
+      accentOpacity: 0.04,
+      borderOpacity: 0.1,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: AppTheme.textSecondary),
-              const SizedBox(width: 4),
+              Icon(icon, size: 14, color: AppTheme.textSecondary),
+              const SizedBox(width: 5),
               Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.textSecondary,
+                  fontSize: 11.5,
+                ),
               ),
             ],
           ),
@@ -814,48 +883,49 @@ class _InputBarState extends ConsumerState<_InputBar> {
   Widget build(BuildContext context) {
     final isLoading = ref.watch(workspaceProvider(_getProjectId())).isLoading;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        border: Border(
-          top: BorderSide(color: AppTheme.outlineDark.withValues(alpha: 0.5)),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focusNode,
-              enabled: !isLoading,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _send(),
-              minLines: 1,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: '输入你的想法...',
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+            child: ForgeGlassCard(
+              padding: EdgeInsets.zero,
+              borderRadius: BorderRadius.circular(22),
+              accent: AppTheme.primary,
+              accentOpacity: 0.05,
+              borderOpacity: 0.16,
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                enabled: !isLoading,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _send(),
+                minLines: 1,
+                maxLines: 4,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 13.5,
                 ),
-                border: OutlineInputBorder(),
+                decoration: const InputDecoration(
+                  hintText: '告诉锻造台下一步...',
+                  hintStyle: TextStyle(color: AppTheme.textTertiary),
+                  filled: false,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  border: InputBorder.none,
+                ),
               ),
             ),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            onPressed: isLoading ? null : _send,
-            icon: Icon(
-              isLoading ? Icons.hourglass_top : Icons.send_rounded,
-              color: isLoading ? AppTheme.textSecondary : AppTheme.primary,
-            ),
-            style: IconButton.styleFrom(
-              backgroundColor: AppTheme.surfaceVariant,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+          ForgeIconButton(
+            icon: isLoading ? Icons.hourglass_top_rounded : Icons.send_rounded,
+            onTap: isLoading ? null : _send,
+            accent: AppTheme.primary,
+            glow: !isLoading,
+            tooltip: '发送',
           ),
         ],
       ),

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/cosmic_forge.dart';
 import '../../../services/ai/model_router.dart';
 import '../../../services/ai/providers/ai_provider_registry.dart';
 
@@ -72,14 +75,22 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
       final useCustom = await ModelRouter.hasCustomKey(cfg.modelType);
       final key = useCustom ? (await ModelRouter.getApiKey(cfg.modelType)) : '';
       final provider = await ModelRouter.getProvider(cfg.modelType);
+      final providers = cfg.providers;
+      final selectedProvider = provider != null && providers.contains(provider)
+          ? provider
+          : (providers.isNotEmpty ? providers[0] : '');
 
+      if (!mounted) return;
       setState(() {
         _useCustomKey[i] = useCustom;
         _keyControllers[i] = TextEditingController(text: key);
-        _selectedProvider[i] =
-            provider ?? (cfg.providers.isNotEmpty ? cfg.providers[0] : '');
+        _selectedProvider[i] = selectedProvider;
       });
+      if (selectedProvider.isNotEmpty && selectedProvider != provider) {
+        await ModelRouter.setProvider(cfg.modelType, selectedProvider);
+      }
     }
+    if (!mounted) return;
     setState(() => _loaded = true);
   }
 
@@ -94,23 +105,38 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('API 配置')),
-        body: const Center(child: CircularProgressIndicator()),
+      return const Scaffold(
+        body: CosmicBackground(
+          child: Center(child: StarRingLoader(label: '加载模型路由')),
+        ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('API 配置')),
-      body: ListView.builder(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          16 + MediaQuery.of(context).padding.bottom,
+      body: CosmicBackground(
+        child: SafeArea(
+          child: ListView.builder(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              10,
+              16,
+              16 + MediaQuery.of(context).padding.bottom,
+            ),
+            itemCount: _modelConfigs.length + 1,
+            itemBuilder: (_, i) {
+              if (i == 0) {
+                return const Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: _SettingsSubpageHeader(
+                    title: 'API 配置',
+                    subtitle: '模型路由与自定义密钥',
+                  ),
+                );
+              }
+              return _buildModelCard(i - 1);
+            },
+          ),
         ),
-        itemCount: _modelConfigs.length,
-        itemBuilder: (_, i) => _buildModelCard(i),
       ),
     );
   }
@@ -123,15 +149,27 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Card(
+      child: ForgeGlassCard(
+        borderRadius: BorderRadius.circular(20),
+        accent: AppTheme.primary,
+        accentOpacity: 0.05,
+        borderOpacity: 0.1,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(config.icon, size: 24, color: AppTheme.primary),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(config.icon, size: 19, color: AppTheme.primary),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -144,10 +182,10 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              SwitchListTile(
+              SwitchListTile.adaptive(
                 title: const Text('使用自己的 API Key'),
                 subtitle: Text(
-                  useCustom ? '将使用您填写的 Key 调用' : '使用平台默认',
+                  useCustom ? '将使用您填写的 Key 调用' : _defaultRouteLabel(config),
                   style: const TextStyle(fontSize: 12),
                 ),
                 value: useCustom,
@@ -199,6 +237,15 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                   obscureText: true,
                   onChanged: (_) => _saveKey(index),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  _routeNote(config.modelType),
+                  style: const TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 11,
+                    height: 1.35,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -228,9 +275,7 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
   void _saveKey(int index) {
     final config = _modelConfigs[index];
     final key = _keyControllers[index]!.text.trim();
-    if (key.isNotEmpty) {
-      ModelRouter.setApiKey(config.modelType, key);
-    }
+    ModelRouter.setApiKey(config.modelType, key);
   }
 
   Future<void> _testConnection(int index) async {
@@ -242,28 +287,80 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
       return;
     }
 
+    final inferredProvider = _inferProvider(config, key);
+    if (inferredProvider != null &&
+        inferredProvider != _selectedProvider[index]) {
+      setState(() => _selectedProvider[index] = inferredProvider);
+      await ModelRouter.setProvider(config.modelType, inferredProvider);
+    }
+
+    if (!mounted) return;
     setState(() => _testing[index] = true);
 
     try {
       // Use the selected provider's real endpoint for testing
       final providerName = _selectedProvider[index] ?? config.providers.first;
       final provider = AiProviderRegistry.get(providerName);
-      final success = await provider.testConnection(key);
+      final success = await provider
+          .testConnectionForModel(key, config.modelType)
+          .timeout(const Duration(seconds: 15));
 
       if (mounted) {
         if (success) {
-          _showSnack('${config.label} 连接成功 ✅');
+          _showSnack('${config.label} · $providerName 连接成功');
           ModelRouter.setApiKey(config.modelType, key);
           ModelRouter.setUseCustom(config.modelType, true);
           ModelRouter.setProvider(config.modelType, providerName);
         } else {
-          _showSnack('连接失败 — 请检查 Key 和网络');
+          _showSnack('连接失败：请检查 $providerName Key、供应商和网络');
         }
       }
+    } on TimeoutException {
+      if (mounted) _showSnack('测试超时：15 秒内没有响应，请检查网络或供应商');
     } catch (e) {
       if (mounted) _showSnack('测试失败: $e');
     } finally {
       if (mounted) setState(() => _testing[index] = false);
+    }
+  }
+
+  String? _inferProvider(_ModelConfig config, String key) {
+    if (config.modelType == ModelType.image && key.startsWith('sk-')) {
+      return 'GRS AI';
+    }
+    if (config.modelType == ModelType.image && key.startsWith('AIza')) {
+      return 'Nano Banana';
+    }
+    if (key.startsWith('sk-api') &&
+        config.providers.contains('MiniMax') &&
+        config.modelType != ModelType.image) {
+      return 'MiniMax';
+    }
+    return null;
+  }
+
+  String _defaultRouteLabel(_ModelConfig config) {
+    switch (config.modelType) {
+      case ModelType.image:
+        return '默认使用 GRS AI 生成透明背景游戏图片素材';
+      case ModelType.music:
+        return '默认使用 MiniMax 生成游戏配乐';
+      case ModelType.chat:
+      case ModelType.code:
+        return '使用平台默认路由';
+    }
+  }
+
+  String _routeNote(ModelType type) {
+    switch (type) {
+      case ModelType.chat:
+        return '用于工作台对话与苏格拉底式追问。';
+      case ModelType.image:
+        return '默认已内置 GRS AI，用于生成透明背景、可直接嵌入游戏的图片素材。自填 sk- Key 会自动切到 GRS AI；Google/Gemini AIza Key 会自动切到 Nano Banana。';
+      case ModelType.code:
+        return '用于游戏代码生成与预览页 AI 修改，属于推理/代码路线；MiniMax sk-api Key 会自动识别。';
+      case ModelType.music:
+        return '默认已内置 MiniMax music-2.6-free，用于预览页素材面板生成游戏配乐。';
     }
   }
 
@@ -280,6 +377,50 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
         duration: Duration(seconds: 1),
         width: 120,
       ),
+    );
+  }
+}
+
+class _SettingsSubpageHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SettingsSubpageHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        ForgeIconButton(
+          icon: Icons.chevron_left_rounded,
+          onTap: () => Navigator.maybePop(context),
+          tooltip: '返回',
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: AppTheme.textTertiary,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

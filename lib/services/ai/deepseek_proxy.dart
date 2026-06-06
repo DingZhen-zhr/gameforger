@@ -98,8 +98,7 @@ class AiProxy {
       maxTokens: maxTokens,
     );
 
-    final content =
-        result['choices']?[0]?['message']?['content'] as String?;
+    final content = result['choices']?[0]?['message']?['content'] as String?;
     if (content != null && content.isNotEmpty) {
       yield content;
     }
@@ -117,17 +116,41 @@ class AiProxy {
     if (apiKey.isEmpty) {
       // Platform default doesn't support image generation yet
       throw UnsupportedError(
-          'Image generation requires a custom API key. '
-          'Configure one in Settings → API Configuration.');
+        'Image generation requires a custom API key. '
+        'Configure one in Settings → API Configuration.',
+      );
     }
 
     await _tryDeduct(modelType);
 
     final provider = await AiProviderRegistry.forModelType(modelType);
-    return provider.generateImage(
+    return provider.generateImage(prompt: prompt, apiKey: apiKey, size: size);
+  }
+
+  /// Generate music/audio through the configured provider.
+  /// Returns an audio URL/data URL, or null if the provider doesn't support it.
+  Future<String?> generateMusic({
+    required String prompt,
+    String? lyrics,
+    bool instrumental = true,
+    ModelType modelType = ModelType.music,
+  }) async {
+    final apiKey = await ModelRouter.getApiKey(modelType);
+
+    if (apiKey.isEmpty) {
+      throw UnsupportedError(
+        'Music generation requires an API key. Configure one in Settings → API Configuration.',
+      );
+    }
+
+    await _tryDeduct(modelType);
+
+    final provider = await AiProviderRegistry.forModelType(modelType);
+    return provider.generateMusic(
       prompt: prompt,
       apiKey: apiKey,
-      size: size,
+      lyrics: lyrics,
+      instrumental: instrumental,
     );
   }
 

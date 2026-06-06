@@ -1,8 +1,10 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cosmic_forge.dart';
 import '../../../../core/theme/glass_utils.dart';
 import '../../../home/providers/home_provider.dart';
 
@@ -106,36 +108,30 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
   }
 
   Widget _buildPreviewPanel(double height, double opacity, double t) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16 * t, sigmaY: 16 * t),
-        child: Container(
-          height: height.clamp(0, 250),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.surfaceVariant.withValues(alpha: 0.85),
-                AppTheme.surfaceDark.withValues(alpha: 0.92),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12),
-              width: 1,
-            ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          child: ClipRect(
-            child: height < 96
-                ? const SizedBox.shrink()
-                : Opacity(
-                    opacity: opacity.clamp(0.0, 1.0),
-                    child: _buildPreviewContent(),
-                  ),
-          ),
+    return Container(
+      height: height.clamp(0, 250),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primary.withValues(alpha: 0.18 * t),
+            AppTheme.surfaceDark.withValues(alpha: 0.96),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        border: Border.all(
+          color: AppTheme.primary.withValues(alpha: 0.22),
+          width: 0.8,
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      child: ClipRect(
+        child: height < 96
+            ? const SizedBox.shrink()
+            : Opacity(
+                opacity: opacity.clamp(0.0, 1.0),
+                child: _buildPreviewContent(),
+              ),
       ),
     );
   }
@@ -143,35 +139,31 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
   Widget _buildPreviewContent() {
     return Stack(
       children: [
-        // Static cover with gradient, icon, and project info
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.tabGallery.withValues(alpha: 0.16),
-                AppTheme.secondary.withValues(alpha: 0.08),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(-0.35, -0.45),
+                radius: 1.1,
+                colors: [
+                  AppTheme.secondary.withValues(alpha: 0.2),
+                  AppTheme.primary.withValues(alpha: 0.12),
+                  AppTheme.bgDark,
+                ],
+              ),
+            ),
+            child: CustomPaint(
+              painter: _TilePreviewPainter(widget.project.title.hashCode),
             ),
           ),
-          child: Center(
+        ),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppTheme.tabGallery.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.play_circle_fill_rounded,
-                    color: AppTheme.tabGallery,
-                    size: 30,
-                  ),
-                ),
+                const NebulaOrb(size: 58, spin: false),
                 const SizedBox(height: 12),
                 Text(
                   widget.project.title,
@@ -184,9 +176,11 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  '轻触打开完整预览',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                const SizedBox(height: 8),
+                const ForgeChip(
+                  label: '轻触打开完整预览',
+                  tone: ForgeChipTone.cyan,
+                  icon: Icons.open_in_full_rounded,
                 ),
               ],
             ),
@@ -282,69 +276,60 @@ class _GlassTileCardState extends State<_GlassTileCard> {
         scale: _isPressed ? 0.98 : 1.0,
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeOut,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark.withValues(alpha: 0.75),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.glassBorder, width: 1),
+        child: ForgeGlassCard(
+          borderRadius: BorderRadius.circular(18),
+          padding: const EdgeInsets.all(12),
+          accent: widget.isExpanded ? AppTheme.secondary : AppTheme.primary,
+          accentOpacity: widget.isExpanded ? 0.08 : 0.04,
+          borderOpacity: widget.isExpanded ? 0.16 : 0.08,
+          child: Row(
+            children: [
+              NebulaSeed(
+                size: 56,
+                hue: widget.project.title.hashCode,
+                accent: widget.isExpanded
+                    ? AppTheme.secondary
+                    : AppTheme.primary,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.tabGallery.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(12),
+                    Text(
+                      widget.project.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
                       ),
-                      child: const Icon(
-                        Icons.play_circle_fill_rounded,
-                        color: AppTheme.tabGallery,
-                        size: 22,
-                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.project.title,
-                            style: Theme.of(context).textTheme.titleMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${widget.timeStr} 生成',
-                            style: const TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    AnimatedRotation(
-                      turns: widget.isExpanded ? 0.25 : 0,
-                      duration: const Duration(milliseconds: 300),
-                      curve: GlassUtils.iosSpringCurve,
-                      child: const Icon(
-                        Icons.chevron_right,
+                    const SizedBox(height: 4),
+                    Text(
+                      '${widget.timeStr} 生成',
+                      style: const TextStyle(
                         color: AppTheme.textTertiary,
-                        size: 20,
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(width: 8),
+              const ForgeChip(label: '可玩', tone: ForgeChipTone.cyan),
+              const SizedBox(width: 8),
+              AnimatedRotation(
+                turns: widget.isExpanded ? 0.25 : 0,
+                duration: const Duration(milliseconds: 300),
+                curve: GlassUtils.iosSpringCurve,
+                child: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppTheme.textTertiary,
+                  size: 18,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -399,4 +384,51 @@ class _MiniGlassButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TilePreviewPainter extends CustomPainter {
+  final int seed;
+
+  const _TilePreviewPainter(this.seed);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppTheme.secondary.withValues(alpha: 0.5)
+      ..strokeWidth = 0.9
+      ..style = PaintingStyle.stroke;
+    for (var i = 0; i < 4; i++) {
+      final y = size.height * (0.42 + i * 0.12);
+      final path = Path()
+        ..moveTo(size.width * 0.06, y)
+        ..quadraticBezierTo(
+          size.width * 0.5,
+          y - 20 + (seed % 17),
+          size.width * 0.94,
+          y + 8,
+        );
+      canvas.drawPath(path, paint);
+    }
+    canvas.drawCircle(
+      Offset(size.width * 0.72, size.height * 0.28),
+      38,
+      Paint()
+        ..shader =
+            RadialGradient(
+              colors: [
+                AppTheme.gold.withValues(alpha: 0.28),
+                Colors.transparent,
+              ],
+            ).createShader(
+              Rect.fromCircle(
+                center: Offset(size.width * 0.72, size.height * 0.28),
+                radius: 46,
+              ),
+            ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _TilePreviewPainter oldDelegate) =>
+      oldDelegate.seed != seed;
 }

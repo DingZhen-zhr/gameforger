@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/cosmic_forge.dart';
 import '../../../services/ai/game_gen_service.dart';
 import '../../../services/audio/audio_bridge.dart';
 import '../../../services/storage/local_db_service.dart';
@@ -71,18 +72,8 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
     // placeholder HTML that gets immediately replaced).
     if (!state.isInitialized) {
       return const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(strokeWidth: 3),
-              SizedBox(height: 16),
-              Text(
-                '加载游戏中...',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-              ),
-            ],
-          ),
+        body: CosmicBackground(
+          child: Center(child: StarRingLoader(label: '加载游戏中')),
         ),
       );
     }
@@ -112,146 +103,96 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-          tooltip: '返回工作台',
-        ),
-        title: const Text('游戏预览'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.music_note),
-            onPressed: () => _showAudioSettings(context),
-            tooltip: '音频设置',
-          ),
-          IconButton(
-            icon: const Icon(Icons.fullscreen),
-            onPressed: notifier.toggleFullscreen,
-            tooltip: '全屏',
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () => _onShare(context, notifier),
-            tooltip: '分享',
-          ),
-          PopupMenuButton<String>(
-            onSelected: (v) async {
-              if (v == 'help') {
-                _showHelpDialog(context);
-              } else if (v == 'regenerate') {
-                await _onRegenerate(notifier);
-              }
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(
-                value: 'regenerate',
-                child: ListTile(
-                  leading: Icon(Icons.refresh),
-                  title: Text('重新生成'),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'help',
-                child: ListTile(
-                  leading: Icon(Icons.help_outline),
-                  title: Text('帮助'),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          Column(
+      body: CosmicBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Stack(
             children: [
-              Expanded(flex: 3, child: _buildWebView()),
-              const Divider(height: 1, color: AppTheme.outlineDark),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    Container(
-                      color: AppTheme.surfaceDark,
-                      child: TabBar(
-                        controller: _tabController,
-                        indicatorColor: AppTheme.primary,
-                        labelColor: AppTheme.primary,
-                        unselectedLabelColor: AppTheme.textSecondary,
-                        labelStyle: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+              Column(
+                children: [
+                  _PreviewTopBar(
+                    onBack: () => context.pop(),
+                    onAudio: () => _showAudioSettings(context),
+                    onFullscreen: notifier.toggleFullscreen,
+                    onShare: () => _onShare(context, notifier),
+                    onHelp: () => _showHelpDialog(context),
+                    onRegenerate: () => _onRegenerate(notifier),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.31,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: AppTheme.primary.withValues(alpha: 0.22),
+                              width: 0.8,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: _buildWebView(),
                         ),
-                        tabs: const [
-                          Tab(text: '代码', icon: Icon(Icons.code, size: 18)),
-                          Tab(text: '对话', icon: Icon(Icons.chat, size: 18)),
-                          Tab(text: '素材', icon: Icon(Icons.image, size: 18)),
-                          Tab(text: '信息', icon: Icon(Icons.info, size: 18)),
-                        ],
                       ),
                     ),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          CodePanel(
-                            projectId: widget.projectId,
-                            onApplyCode: (newCode) {
-                              ref
-                                  .read(
-                                    previewProvider(widget.projectId).notifier,
-                                  )
-                                  .updateCode(newCode);
-                              // WebView reloads automatically via hash-based key change
-                            },
-                          ),
-                          PreviewChatPanel(projectId: widget.projectId),
-                          AssetPanel(
-                            projectId: widget.projectId,
-                            onApplyCode: (newCode) {
-                              ref
-                                  .read(
-                                    previewProvider(widget.projectId).notifier,
-                                  )
-                                  .updateCode(newCode);
-                              // WebView reloads automatically via hash-based key change
-                            },
-                          ),
-                          _InfoTab(projectId: widget.projectId),
-                        ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                    child: _ForgePreviewTabStrip(controller: _tabController),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            CodePanel(
+                              projectId: widget.projectId,
+                              onApplyCode: (newCode) {
+                                ref
+                                    .read(
+                                      previewProvider(
+                                        widget.projectId,
+                                      ).notifier,
+                                    )
+                                    .updateCodeAndPersist(newCode);
+                              },
+                            ),
+                            PreviewChatPanel(projectId: widget.projectId),
+                            AssetPanel(
+                              projectId: widget.projectId,
+                              htmlCode: state.htmlCode,
+                              onApplyCode: (newCode) {
+                                ref
+                                    .read(
+                                      previewProvider(
+                                        widget.projectId,
+                                      ).notifier,
+                                    )
+                                    .updateCodeAndPersist(newCode);
+                              },
+                            ),
+                            _InfoTab(projectId: widget.projectId),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              if (_isRegenerating)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.62),
+                  child: const Center(
+                    child: StarRingLoader(label: 'AI 正在重新生成游戏'),
+                  ),
+                ),
             ],
           ),
-          if (_isRegenerating)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: AppTheme.primary,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'AI 正在重新生成游戏...',
-                      style: TextStyle(color: Colors.white, fontSize: 15),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -712,15 +653,159 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
   }
 }
 
+class _PreviewTopBar extends StatelessWidget {
+  final VoidCallback onBack;
+  final VoidCallback onAudio;
+  final VoidCallback onFullscreen;
+  final VoidCallback onShare;
+  final VoidCallback onHelp;
+  final VoidCallback onRegenerate;
+
+  const _PreviewTopBar({
+    required this.onBack,
+    required this.onAudio,
+    required this.onFullscreen,
+    required this.onShare,
+    required this.onHelp,
+    required this.onRegenerate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+      child: Row(
+        children: [
+          ForgeIconButton(
+            icon: Icons.chevron_left_rounded,
+            onTap: onBack,
+            tooltip: '返回工作台',
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  '游戏预览',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Row(
+                  children: [
+                    ForgeChip(
+                      label: '运行中',
+                      tone: ForgeChipTone.online,
+                      dot: true,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          ForgeIconButton(
+            icon: Icons.volume_up_rounded,
+            onTap: onAudio,
+            tooltip: '音频',
+          ),
+          const SizedBox(width: 6),
+          ForgeIconButton(
+            icon: Icons.open_in_full_rounded,
+            onTap: onFullscreen,
+            tooltip: '全屏',
+          ),
+          const SizedBox(width: 6),
+          ForgeIconButton(
+            icon: Icons.ios_share_rounded,
+            onTap: onShare,
+            tooltip: '分享',
+          ),
+          const SizedBox(width: 6),
+          PopupMenuButton<String>(
+            color: AppTheme.surfaceVariant,
+            icon: const Icon(
+              Icons.more_horiz_rounded,
+              color: AppTheme.textPrimary,
+            ),
+            onSelected: (value) {
+              if (value == 'help') onHelp();
+              if (value == 'regenerate') onRegenerate();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'regenerate', child: Text('重新生成')),
+              PopupMenuItem(value: 'help', child: Text('帮助')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ForgePreviewTabStrip extends StatelessWidget {
+  final TabController controller;
+
+  const _ForgePreviewTabStrip({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return ForgeGlassCard(
+      padding: const EdgeInsets.all(4),
+      borderRadius: BorderRadius.circular(14),
+      accent: AppTheme.primary,
+      accentOpacity: 0.04,
+      borderOpacity: 0.08,
+      child: TabBar(
+        controller: controller,
+        indicator: BoxDecoration(
+          color: AppTheme.primary.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(
+            color: AppTheme.primary.withValues(alpha: 0.38),
+            width: 0.8,
+          ),
+        ),
+        dividerColor: Colors.transparent,
+        labelColor: AppTheme.textPrimary,
+        unselectedLabelColor: AppTheme.textTertiary,
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        tabs: const [
+          Tab(text: '代码', icon: Icon(Icons.code_rounded, size: 15)),
+          Tab(
+            text: '对话',
+            icon: Icon(Icons.chat_bubble_outline_rounded, size: 15),
+          ),
+          Tab(text: '素材', icon: Icon(Icons.palette_outlined, size: 15)),
+          Tab(text: '信息', icon: Icon(Icons.info_outline_rounded, size: 15)),
+        ],
+      ),
+    );
+  }
+}
+
 class _InfoTab extends ConsumerWidget {
   final String projectId;
   const _InfoTab({required this.projectId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      color: AppTheme.bgDark,
+    return ForgeGlassCard(
       padding: const EdgeInsets.all(16),
+      borderRadius: BorderRadius.circular(16),
+      accent: AppTheme.secondary,
+      accentOpacity: 0.04,
+      borderOpacity: 0.08,
       child: ListView(
         children: [
           _infoRow(context, '项目 ID', '${projectId.substring(0, 8)}...'),

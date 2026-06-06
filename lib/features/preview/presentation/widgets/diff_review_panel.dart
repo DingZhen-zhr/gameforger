@@ -10,7 +10,7 @@ class DiffReviewPanel extends StatelessWidget {
   final VoidCallback onAcceptAll;
   final VoidCallback onRejectAll;
   final VoidCallback onApply;
-  final void Function(String editId, String newOld, String newNew)?
+  final Future<void> Function(String editId, String newOld, String newNew)?
   onManualRetry;
   final bool isApplying;
   final bool isAllDecided;
@@ -136,7 +136,7 @@ class _EditCard extends StatelessWidget {
   final PreviewEditProposal edit;
   final VoidCallback onAccept;
   final VoidCallback onReject;
-  final void Function(String editId, String newOld, String newNew)?
+  final Future<void> Function(String editId, String newOld, String newNew)?
   onManualRetry;
 
   const _EditCard({

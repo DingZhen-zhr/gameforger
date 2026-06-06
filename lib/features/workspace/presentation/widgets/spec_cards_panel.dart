@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cosmic_forge.dart';
 import '../../domain/game_spec.dart';
 
 /// Interactive stacked cards showing all filled specification dimensions.
@@ -76,8 +77,15 @@ class _SpecCardsPanelState extends State<SpecCardsPanel>
   };
 
   static const _dimOrder = [
-    'genre', 'theme', 'art_style', 'camera_view',
-    'core_mechanic', 'player_ability', 'goal', 'music_vibe', 'difficulty',
+    'genre',
+    'theme',
+    'art_style',
+    'camera_view',
+    'core_mechanic',
+    'player_ability',
+    'goal',
+    'music_vibe',
+    'difficulty',
   ];
 
   static const _positions = [
@@ -183,8 +191,8 @@ class _SpecCardsPanelState extends State<SpecCardsPanel>
     final effectiveT = _isFlyingOut ? animT : 0;
     return _CardPosition(
       scale: from.scale + (to.scale - from.scale) * effectiveT,
-      translateY: from.translateY +
-          (to.translateY - from.translateY) * effectiveT,
+      translateY:
+          from.translateY + (to.translateY - from.translateY) * effectiveT,
       opacity: from.opacity + (to.opacity - from.opacity) * effectiveT,
     );
   }
@@ -193,45 +201,35 @@ class _SpecCardsPanelState extends State<SpecCardsPanel>
   Widget build(BuildContext context) {
     if (_cards.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        border: Border(
-          bottom:
-              BorderSide(color: AppTheme.outlineDark.withValues(alpha: 0.5)),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              const Icon(Icons.dashboard_customize,
-                  size: 14, color: AppTheme.secondary),
-              const SizedBox(width: 6),
               Text(
-                '已确定的游戏设定',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppTheme.textSecondary, fontSize: 11),
+                '设定卡片',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
               ),
               const Spacer(),
               Text(
                 '${_cards.length} 项 · 左右滑动切换',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                    fontSize: 10),
+                  color: AppTheme.textTertiary,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          SizedBox(
-            height: 130,
-            child: _buildCardStack(),
-          ),
+          const SizedBox(height: 8),
+          SizedBox(height: 136, child: _buildCardStack()),
         ],
       ),
     );
@@ -257,10 +255,9 @@ class _SpecCardsPanelState extends State<SpecCardsPanel>
               label: card.label,
               value: card.value,
               dimKey: card.dimKey,
-              onTapEdit: () => widget.onEdit(
-                  card.dimKey, card.label, card.value),
-              onTapDiscuss: () =>
-                  widget.onRediscuss(card.dimKey, card.label),
+              onTapEdit: () =>
+                  widget.onEdit(card.dimKey, card.label, card.value),
+              onTapDiscuss: () => widget.onRediscuss(card.dimKey, card.label),
             ),
           ),
         );
@@ -280,10 +277,7 @@ class _SpecCardsPanelState extends State<SpecCardsPanel>
 
           // Rotation during drag for physical feel
           final rotation = (_dragDx / 800).clamp(-0.15, 0.15);
-          cardWidget = Transform.rotate(
-            angle: rotation,
-            child: cardWidget,
-          );
+          cardWidget = Transform.rotate(angle: rotation, child: cardWidget);
 
           cardWidget = GestureDetector(
             onPanStart: _onPanStart,
@@ -295,12 +289,7 @@ class _SpecCardsPanelState extends State<SpecCardsPanel>
           cardWidget = IgnorePointer(child: cardWidget);
         }
 
-        return Positioned(
-          left: 0,
-          right: 0,
-          top: 4,
-          child: cardWidget,
-        );
+        return Positioned(left: 0, right: 0, top: 4, child: cardWidget);
       }).reversed.toList(), // reverse so top card (i=0) renders on top
     );
   }
@@ -325,51 +314,54 @@ class _SpecCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 280),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: AppTheme.outlineDark.withValues(alpha: 0.4)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return ForgeGlassCard(
+      padding: const EdgeInsets.all(12),
+      borderRadius: BorderRadius.circular(16),
+      accent: AppTheme.primary,
+      accentOpacity: 0.07,
+      borderOpacity: 0.16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: AppTheme.secondary),
-              const SizedBox(width: 6),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(
+                    color: AppTheme.secondary.withValues(alpha: 0.28),
+                    width: 0.8,
+                  ),
+                ),
+                child: Icon(icon, size: 15, color: AppTheme.cyan),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const ForgeChip(label: '已锁', tone: ForgeChipTone.violet),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             value,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.textPrimary,
-                  fontSize: 12,
-                  height: 1.3,
-                ),
+              color: AppTheme.textPrimary,
+              fontSize: 12.5,
+              height: 1.4,
+            ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
@@ -412,10 +404,19 @@ class _MiniButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: InkWell(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(3),
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 0.8,
+            ),
+          ),
           child: Icon(icon, size: 14, color: AppTheme.textSecondary),
         ),
       ),

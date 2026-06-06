@@ -1,9 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/liquid_glass.dart';
+import '../../../core/widgets/cosmic_forge.dart';
 import '../../home/providers/home_provider.dart';
 import '../providers/gallery_provider.dart';
 import 'widgets/expandable_gallery_tile.dart';
@@ -102,10 +104,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
               sliver: const SliverToBoxAdapter(
-                child: GlassSectionHeader(
-                  title: '全部作品',
-                  subtitle: '轻触条目展开，直接进入可玩预览。',
-                ),
+                child: ForgeSectionLabel(title: '全部作品'),
               ),
             ),
             SliverPadding(
@@ -143,7 +142,13 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: _GalleryNav(count: projects.length),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               sliver: SliverToBoxAdapter(
                 child: _GalleryHero(
                   projects: projects,
@@ -163,6 +168,49 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
   }
 }
 
+class _GalleryNav extends StatelessWidget {
+  final int count;
+
+  const _GalleryNav({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '作品',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  height: 1.05,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '可玩宇宙样本 · $count 件已生成',
+                style: const TextStyle(
+                  color: AppTheme.textTertiary,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        const ForgeIconButton(icon: Icons.search_rounded, tooltip: '搜索'),
+        const SizedBox(width: 8),
+        const ForgeIconButton(icon: Icons.more_horiz_rounded, tooltip: '更多'),
+      ],
+    );
+  }
+}
+
 class _GalleryHero extends StatelessWidget {
   final List<ProjectModel> projects;
   final VoidCallback? onOpenLatest;
@@ -173,151 +221,246 @@ class _GalleryHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final latest = projects.isEmpty ? null : projects.first;
 
-    return LiquidGlassSurface(
-      borderRadius: BorderRadius.circular(32),
-      blurSigma: 28,
-      tintColor: AppTheme.tabGallery,
-      tintOpacity: 0.11,
-      borderOpacity: 0.2,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    if (latest == null) {
+      return const ForgeGlassCard(
+        borderRadius: BorderRadius.all(Radius.circular(24)),
+        accent: AppTheme.secondary,
+        accentOpacity: 0.06,
+        borderOpacity: 0.12,
+        padding: EdgeInsets.all(18),
+        child: Row(
+          children: [
+            NebulaOrb(size: 50, spin: false),
+            SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '作品库等待生成',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    '项目生成后会出现在这里。',
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: onOpenLatest,
+      child: SizedBox(
+        height: 208,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
             children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '作品库',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        height: 1.05,
-                      ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(-0.45, -0.68),
+                      radius: 1.1,
+                      colors: [
+                        AppTheme.primary.withValues(alpha: 0.58),
+                        AppTheme.secondary.withValues(alpha: 0.2),
+                        AppTheme.bgDark,
+                      ],
+                      stops: const [0, 0.48, 1],
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      '用更像 App Store 的方式展示可玩的生成结果。',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 14,
-                        height: 1.35,
-                      ),
+                    border: Border.all(
+                      color: AppTheme.primary.withValues(alpha: 0.32),
+                      width: 0.8,
                     ),
-                  ],
+                  ),
+                  child: CustomPaint(
+                    painter: _GalleryShowcasePainter(latest.title.hashCode),
+                  ),
                 ),
               ),
-              _GalleryCountBadge(count: projects.length),
-            ],
-          ),
-          if (latest != null) ...[
-            const SizedBox(height: 18),
-            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  width: 58,
-                  height: 58,
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 42, 16, 16),
                   decoration: BoxDecoration(
-                    color: AppTheme.tabGallery.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(18),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.68),
+                      ],
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    color: AppTheme.tabGallery,
-                    size: 34,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text(
-                        '最新生成',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                ForgeChip(
+                                  label: '可玩',
+                                  tone: ForgeChipTone.cyan,
+                                  dot: true,
+                                ),
+                                ForgeChip(
+                                  label: 'Canvas',
+                                  tone: ForgeChipTone.violet,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              latest.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w800,
+                                height: 1.1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_formatTime(latest.updatedAt)} 生成',
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        latest.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium,
+                      const SizedBox(width: 12),
+                      ForgePrimaryButton(
+                        label: '运行',
+                        icon: Icons.bolt_rounded,
+                        onPressed: onOpenLatest,
+                        accent: AppTheme.secondary,
+                        compact: true,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
-                CupertinoButton(
-                  minimumSize: Size.zero,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 9,
-                  ),
-                  color: AppTheme.tabGallery.withValues(alpha: 0.86),
-                  borderRadius: BorderRadius.circular(16),
-                  onPressed: onOpenLatest,
-                  child: const Text(
-                    '预览',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+              ),
+              Positioned(
+                left: 14,
+                top: 12,
+                child: Text(
+                  '最新生成',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.52),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
                   ),
                 ),
-              ],
-            ),
-          ],
-        ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  String _formatTime(DateTime dt) {
+    final daysAgo = DateTime.now().difference(dt).inDays;
+    if (daysAgo == 0) return '今天';
+    if (daysAgo == 1) return '昨天';
+    return '$daysAgo 天前';
   }
 }
 
-class _GalleryCountBadge extends StatelessWidget {
-  final int count;
+class _GalleryShowcasePainter extends CustomPainter {
+  final int seed;
 
-  const _GalleryCountBadge({required this.count});
+  const _GalleryShowcasePainter(this.seed);
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.tabGallery.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.tabGallery.withValues(alpha: 0.22)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.auto_awesome_rounded,
-            color: AppTheme.tabGallery,
-            size: 14,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            '$count',
-            style: const TextStyle(
-              color: AppTheme.tabGallery,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+  void paint(Canvas canvas, Size size) {
+    final starPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.45)
+      ..style = PaintingStyle.fill;
+    for (var i = 0; i < 22; i++) {
+      final x = size.width * (0.06 + i * 0.043);
+      final y = size.height * (0.48 + _wave(seed + i) * 0.18);
+      canvas.drawCircle(Offset(x, y), 0.8 + (i % 3) * 0.45, starPaint);
+    }
+
+    final core = Offset(size.width * 0.35, size.height * 0.5);
+    final glow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppTheme.cyan.withValues(alpha: 0.78),
+          AppTheme.primary.withValues(alpha: 0.18),
+          Colors.transparent,
         ],
-      ),
+      ).createShader(Rect.fromCircle(center: core, radius: size.width * 0.22));
+    canvas.drawCircle(core, size.width * 0.2, glow);
+    canvas.drawCircle(core, 5.5, Paint()..color = Colors.white);
+
+    final path = Path()
+      ..moveTo(size.width * 0.08, size.height * 0.82)
+      ..quadraticBezierTo(
+        size.width * 0.5,
+        size.height * 0.62,
+        size.width * 0.92,
+        size.height * 0.8,
+      );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = AppTheme.secondary.withValues(alpha: 0.55)
+        ..strokeWidth = 1.1
+        ..style = PaintingStyle.stroke,
+    );
+
+    final second = Path()
+      ..moveTo(size.width * 0.08, size.height * 0.89)
+      ..quadraticBezierTo(
+        size.width * 0.5,
+        size.height * 0.72,
+        size.width * 0.92,
+        size.height * 0.88,
+      );
+    canvas.drawPath(
+      second,
+      Paint()
+        ..color = AppTheme.primary.withValues(alpha: 0.44)
+        ..strokeWidth = 1
+        ..style = PaintingStyle.stroke,
     );
   }
+
+  double _wave(int value) {
+    return math.sin(value * 0.71);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GalleryShowcasePainter oldDelegate) =>
+      oldDelegate.seed != seed;
 }
 
 class _GalleryMessageState extends StatelessWidget {
@@ -341,10 +484,10 @@ class _GalleryMessageState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          LiquidGlassSurface(
+          ForgeGlassCard(
             borderRadius: BorderRadius.circular(26),
-            tintColor: accent,
-            tintOpacity: 0.12,
+            accent: accent,
+            accentOpacity: 0.1,
             padding: const EdgeInsets.all(18),
             child: Icon(icon, size: 38, color: accent),
           ),

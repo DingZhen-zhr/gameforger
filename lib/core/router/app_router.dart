@@ -13,9 +13,13 @@ import '../../features/workspace/presentation/workspace_page.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  late final GoRouter router;
 
-  return GoRouter(
+  ref.listen(authProvider, (_, _) {
+    router.refresh();
+  });
+
+  router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
     routes: [
@@ -32,16 +36,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) =>
             PreviewPage(projectId: state.pathParameters['id']!),
       ),
-      GoRoute(
-        path: '/settings/api',
-        builder: (_, _) => const ApiConfigPage(),
-      ),
+      GoRoute(path: '/settings/api', builder: (_, _) => const ApiConfigPage()),
       GoRoute(
         path: '/settings/credits',
         builder: (_, _) => const CreditsPage(),
       ),
     ],
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isLoading = authState.status == AuthStatus.initial;
       final location = state.matchedLocation;
@@ -58,4 +60,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
   );
+
+  ref.onDispose(router.dispose);
+  return router;
 });
