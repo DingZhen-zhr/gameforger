@@ -38,8 +38,9 @@ class ModelRouter {
   /// These are compiled into the client build, so production releases should
   /// replace them with a backend proxy or environment-injected keys.
   static const Map<ModelType, String> defaultApiKeys = {
-    ModelType.image: '',
-    ModelType.music: '',
+    ModelType.image: 'sk-7d2d0f0d01af4fa294131f550fe0eef4',
+    ModelType.music:
+        'sk-api-I1RwQUd4S-gYbfrqZR6Kv9QPycsBkBPhoiAJCeR6CSaPrQBdgCCKTdF2HRIWW5mLMlaqYtwSeNtSiEHEFemFcGlbX_iRaOJ41_DW8zHa0MYh_e02-zwPeFo',
   };
 
   static const Map<ModelType, String> defaultProviders = {
