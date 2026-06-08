@@ -150,6 +150,7 @@ new_value: 新值
 
 注意：只有当用户的请求确实改变了某个维度的定义时才附加 SPEC_UPDATE，不要过度推断。''';
   }
+
   static const int _maxContextTokens = 30000;
   static const int _reservedOutputTokens = 4096;
   static const int _maxHtmlTokens = 15000;
@@ -192,7 +193,8 @@ new_value: 新值
       },
     ];
 
-    int usedTokens = _estimateTokens(systemPrompt) +
+    int usedTokens =
+        _estimateTokens(systemPrompt) +
         _estimateTokens(truncatedHtml) +
         _estimateTokens(userMessage) +
         _reservedOutputTokens;
@@ -210,7 +212,10 @@ new_value: 新值
         var msgTokens = _estimateTokens(content);
         if (historyTokens + msgTokens > budgetForHistory) {
           if (trimmedHistory.isEmpty) {
-            final truncated = _truncateMessage(content, budgetForHistory - historyTokens);
+            final truncated = _truncateMessage(
+              content,
+              budgetForHistory - historyTokens,
+            );
             trimmedHistory.insert(0, {...msg, 'content': truncated});
           }
           break;
@@ -250,6 +255,14 @@ new_value: 新值
               '1. 在「设置 → API 配置」中添加您自己的 OpenAI API Key（推荐）\n'
               '2. 在「设置 → API 配置」中将提供商切换为「DeepSeek」以使用内置服务\n'
               '3. 或联系管理员在 Supabase 后台配置 OPENAI_API_KEY 环境变量',
+        );
+      }
+      if (msg.contains('Invalid HTTP header field value') ||
+          msg.contains('Invalid DeepSeek API key format')) {
+        return PreviewAgentResult(
+          message:
+              'AI Key 格式异常，当前自定义代码/推理模型 Key 里包含乱码、空格或换行，已经无法作为请求头发送。\n\n'
+              '解决方法：到「设置 → API 配置」里关闭代码/推理模型的自定义 Key，或重新粘贴纯文本 DeepSeek Key 后再测试连接。',
         );
       }
       if (msg.contains('Insufficient credits') ||

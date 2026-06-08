@@ -281,14 +281,10 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
   }
 
   Future<void> shareCode() async {
-    try {
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/game_$projectId.html');
-      await file.writeAsString(state.htmlCode);
-      await Share.shareXFiles([XFile(file.path)], subject: 'GameForger - 我的游戏');
-    } catch (_) {
-      // sharing failed silently
-    }
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/game_$projectId.html');
+    await file.writeAsString(state.htmlCode);
+    await Share.shareXFiles([XFile(file.path)], subject: 'GameForger - 我的游戏');
   }
 
   // ─── Agent-powered Preview Chat ──────────────────────────────────────

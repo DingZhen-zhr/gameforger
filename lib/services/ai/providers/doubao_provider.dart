@@ -12,15 +12,24 @@ class DoubaoProvider extends AiProvider {
   @override
   String defaultModel(ModelType type) => '';
 
-  Dio _createDio(String apiKey) => Dio(BaseOptions(
+  Dio _createDio(String apiKey) {
+    final authHeader = ModelRouter.bearerHeader(apiKey);
+    if (authHeader == null) {
+      throw const FormatException('Invalid Doubao API key format.');
+    }
+
+    return Dio(
+      BaseOptions(
         baseUrl: baseUrl,
         headers: {
-          'Authorization': 'Bearer $apiKey',
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         },
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 120),
-      ));
+      ),
+    );
+  }
 
   @override
   Future<Map<String, dynamic>> chat({

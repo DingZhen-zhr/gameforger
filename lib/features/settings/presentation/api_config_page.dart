@@ -72,8 +72,14 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
   Future<void> _loadConfigs() async {
     for (var i = 0; i < _modelConfigs.length; i++) {
       final cfg = _modelConfigs[i];
-      final useCustom = await ModelRouter.hasCustomKey(cfg.modelType);
-      final key = useCustom ? (await ModelRouter.getApiKey(cfg.modelType)) : '';
+      var useCustom = await ModelRouter.hasCustomKey(cfg.modelType);
+      final key = useCustom
+          ? await ModelRouter.getCustomApiKey(cfg.modelType)
+          : '';
+      if (useCustom && key.isEmpty) {
+        await ModelRouter.setUseCustom(cfg.modelType, false);
+        useCustom = false;
+      }
       final provider = await ModelRouter.getProvider(cfg.modelType);
       final providers = cfg.providers;
       final selectedProvider = provider != null && providers.contains(provider)
@@ -229,13 +235,17 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                             icon: const Icon(Icons.clear, size: 18),
                             onPressed: () {
                               controller.clear();
-                              _saveKey(index);
+                              _saveKey(index, normalizeController: false);
                             },
                           )
                         : null,
                   ),
                   obscureText: true,
-                  onChanged: (_) => _saveKey(index),
+                  onChanged: (_) => _saveKey(index, normalizeController: false),
+                  onEditingComplete: () {
+                    _saveKey(index);
+                    FocusScope.of(context).nextFocus();
+                  },
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -272,18 +282,30 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
     );
   }
 
-  void _saveKey(int index) {
+  void _saveKey(int index, {bool normalizeController = true}) {
     final config = _modelConfigs[index];
-    final key = _keyControllers[index]!.text.trim();
+    final key = ModelRouter.sanitizeApiKey(_keyControllers[index]!.text);
+    if (normalizeController && _keyControllers[index]!.text != key) {
+      _keyControllers[index]!.value = TextEditingValue(
+        text: key,
+        selection: TextSelection.collapsed(offset: key.length),
+      );
+    }
     ModelRouter.setApiKey(config.modelType, key);
   }
 
   Future<void> _testConnection(int index) async {
     final config = _modelConfigs[index];
-    final key = _keyControllers[index]!.text.trim();
+    final key = ModelRouter.sanitizeApiKey(_keyControllers[index]!.text);
+    _keyControllers[index]!.text = key;
 
     if (key.isEmpty) {
       _showSnack('请先输入 API Key');
+      return;
+    }
+
+    if (!ModelRouter.isValidApiKey(key)) {
+      _showSnack('API Key 格式异常：请重新粘贴纯文本 Key，不能包含乱码字符');
       return;
     }
 

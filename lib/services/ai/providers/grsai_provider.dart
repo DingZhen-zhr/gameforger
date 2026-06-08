@@ -27,18 +27,25 @@ class GrsaiProvider extends AiProvider {
     }
   }
 
-  Dio _createDio(String apiKey) => Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      headers: {
-        'Authorization': 'Bearer $apiKey',
-        'Content-Type': 'application/json',
-      },
-      connectTimeout: const Duration(seconds: 45),
-      receiveTimeout: _maxWait,
-      sendTimeout: const Duration(seconds: 45),
-    ),
-  );
+  Dio _createDio(String apiKey) {
+    final authHeader = ModelRouter.bearerHeader(apiKey);
+    if (authHeader == null) {
+      throw const FormatException('Invalid GRS AI API key format.');
+    }
+
+    return Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        connectTimeout: const Duration(seconds: 45),
+        receiveTimeout: _maxWait,
+        sendTimeout: const Duration(seconds: 45),
+      ),
+    );
+  }
 
   @override
   Future<Map<String, dynamic>> chat({

@@ -195,10 +195,18 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
     );
   }
 
-  void _onShare(BuildContext context, PreviewNotifier notifier) {
+  Future<void> _onShare(BuildContext context, PreviewNotifier notifier) async {
     try {
-      notifier.shareCode();
+      await notifier.shareCode();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('已打开分享面板'),
+          backgroundColor: AppTheme.secondary,
+        ),
+      );
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('分享失败: $e'), backgroundColor: Colors.redAccent),
       );

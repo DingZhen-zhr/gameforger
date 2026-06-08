@@ -27,7 +27,7 @@ class AssetPanel extends StatefulWidget {
 }
 
 class _AssetPanelState extends State<AssetPanel>
-  with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin {
   final _imagePromptController = TextEditingController();
   bool _isGenerating = false;
   String? _generatedImageUrl;
@@ -1486,20 +1486,65 @@ function $functionName($params) {
 
     final musicLoader =
         '''
+<!-- GameForger AI Music Start -->
 <script>
 // AI-generated game BGM
-const aiGeneratedMusic = new Audio($musicUrl);
-aiGeneratedMusic.loop = true;
-aiGeneratedMusic.volume = 0.35;
-function playAIGeneratedMusic() {
-  aiGeneratedMusic.play().catch(() => {});
-}
-window.addEventListener('pointerdown', playAIGeneratedMusic, { once: true });
-window.addEventListener('keydown', playAIGeneratedMusic, { once: true });
+(function() {
+  var musicUrl = $musicUrl;
+  var bridgeReadyUrl = /^https?:\\/\\//i.test(musicUrl);
+
+  try {
+    if (window.__gameForgerGeneratedMusicAudio) {
+      window.__gameForgerGeneratedMusicAudio.pause();
+      window.__gameForgerGeneratedMusicAudio.currentTime = 0;
+    }
+  } catch (_) {}
+
+  var audio = new Audio(musicUrl);
+  audio.loop = true;
+  audio.volume = 0.35;
+  audio.preload = 'auto';
+
+  window.__gameForgerGeneratedMusicAudio = audio;
+  window.__gameForgerGeneratedMusicStarted = false;
+  window.__gameForgerGeneratedMusicUrl = musicUrl;
+
+  function playAIGeneratedMusic() {
+    if (window.__gameForgerGeneratedMusicStarted) return;
+    window.__gameForgerGeneratedMusicStarted = true;
+
+    try {
+      if (
+        bridgeReadyUrl &&
+        window.GameForge &&
+        typeof window.GameForge.playAudio === 'function'
+      ) {
+        window.GameForge.playAudio(musicUrl, true);
+        return;
+      }
+    } catch (_) {}
+
+    try {
+      var pending = audio.play();
+      if (pending && typeof pending.catch === 'function') {
+        pending.catch(function() {
+          window.__gameForgerGeneratedMusicStarted = false;
+        });
+      }
+    } catch (_) {
+      window.__gameForgerGeneratedMusicStarted = false;
+    }
+  }
+
+  window.playAIGeneratedMusic = playAIGeneratedMusic;
+  window.addEventListener('pointerdown', playAIGeneratedMusic, { once: true });
+  window.addEventListener('keydown', playAIGeneratedMusic, { once: true });
+})();
 </script>
+<!-- GameForger AI Music End -->
 ''';
 
-    final updated = _injectSnippet(html, musicLoader);
+    final updated = _injectOrReplaceMusicSnippet(html, musicLoader);
     _applyUpdatedCode(updated);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1509,6 +1554,26 @@ window.addEventListener('keydown', playAIGeneratedMusic, { once: true });
         duration: Duration(seconds: 3),
       ),
     );
+  }
+
+  String _injectOrReplaceMusicSnippet(String html, String snippet) {
+    const start = '<!-- GameForger AI Music Start -->';
+    const end = '<!-- GameForger AI Music End -->';
+    final taggedSnippet = snippet.trimRight();
+    final taggedPattern = RegExp(
+      '${RegExp.escape(start)}[\\s\\S]*?${RegExp.escape(end)}',
+      multiLine: true,
+    );
+    if (taggedPattern.hasMatch(html)) {
+      return html.replaceFirst(taggedPattern, taggedSnippet);
+    }
+
+    final legacyPattern = RegExp(
+      r'<script>\s*// AI-generated game BGM[\s\S]*?</script>\s*',
+      multiLine: true,
+    );
+    final cleaned = html.replaceAll(legacyPattern, '');
+    return _injectSnippet(cleaned, taggedSnippet);
   }
 
   String _injectSnippet(String html, String snippet) {

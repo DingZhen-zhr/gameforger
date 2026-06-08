@@ -907,7 +907,7 @@ class _InputBarState extends ConsumerState<_InputBar> {
                   fontSize: 13.5,
                 ),
                 decoration: const InputDecoration(
-                  hintText: '告诉锻造台下一步...',
+                  hintText: '告诉我下一步要改什么...',
                   hintStyle: TextStyle(color: AppTheme.textTertiary),
                   filled: false,
                   contentPadding: EdgeInsets.symmetric(

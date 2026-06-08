@@ -85,7 +85,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
       body: CosmicBackground(
         child: SafeArea(
           child: _loading
-              ? const Center(child: StarRingLoader(label: '同步点数核心'))
+              ? const Center(child: StarRingLoader(label: '正在同步点数'))
               : _error != null
               ? Center(
                   child: SingleChildScrollView(
@@ -377,7 +377,7 @@ class _CreditsHeader extends StatelessWidget {
               ),
               SizedBox(height: 4),
               Text(
-                '生成能量与消耗记录',
+                '余额、购买和使用记录',
                 style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
               ),
             ],

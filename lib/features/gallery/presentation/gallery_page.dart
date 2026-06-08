@@ -19,6 +19,8 @@ class GalleryPage extends ConsumerStatefulWidget {
 
 class _GalleryPageState extends ConsumerState<GalleryPage> {
   String? _expandedProjectId;
+  String _galleryQuery = '';
+  _GallerySortMode _gallerySortMode = _GallerySortMode.updatedDesc;
 
   void _handleTileTap(String projectId) {
     setState(() {
@@ -82,6 +84,8 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
         ],
       ),
       data: (projects) {
+        final visibleProjects = _filterAndSortProjects(projects);
+
         if (projects.isEmpty) {
           return _buildGalleryScroll(
             slivers: const [
@@ -89,7 +93,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                 hasScrollBody: false,
                 child: _GalleryMessageState(
                   icon: Icons.auto_awesome_motion_outlined,
-                  title: '作品库等待生成',
+                  title: '还没有作品',
                   message: '项目完成游戏生成后，会以可展开预览的形式出现在这里。',
                   accent: AppTheme.tabGallery,
                 ),
@@ -99,28 +103,47 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
         }
 
         return _buildGalleryScroll(
-          projects: projects,
+          projects: visibleProjects,
+          totalCount: projects.length,
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
-              sliver: const SliverToBoxAdapter(
-                child: ForgeSectionLabel(title: '全部作品'),
+              sliver: SliverToBoxAdapter(
+                child: ForgeSectionLabel(
+                  title: _galleryQuery.isEmpty ? '全部作品' : '搜索结果',
+                  trailing: _galleryQuery.isEmpty
+                      ? _gallerySortLabel
+                      : '${visibleProjects.length} 件匹配',
+                ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 118),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((_, i) {
-                  final project = projects[i];
-                  return ExpandableGalleryTile(
-                    project: project,
-                    isExpanded: _expandedProjectId == project.id,
-                    onTap: () => _handleTileTap(project.id),
-                    onDelete: () => _confirmDelete(project),
-                  );
-                }, childCount: projects.length),
+            if (visibleProjects.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _GalleryMessageState(
+                  icon: Icons.search_off_rounded,
+                  title: '没有找到作品',
+                  message: '没有名称包含「$_galleryQuery」的作品。',
+                  accent: AppTheme.tabGallery,
+                  actionLabel: '清除搜索',
+                  onAction: () => setState(() => _galleryQuery = ''),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 118),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((_, i) {
+                    final project = visibleProjects[i];
+                    return ExpandableGalleryTile(
+                      project: project,
+                      isExpanded: _expandedProjectId == project.id,
+                      onTap: () => _handleTileTap(project.id),
+                      onDelete: () => _confirmDelete(project),
+                    );
+                  }, childCount: visibleProjects.length),
+                ),
               ),
-            ),
           ],
         );
       },
@@ -129,6 +152,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
 
   Widget _buildGalleryScroll({
     List<ProjectModel> projects = const [],
+    int? totalCount,
     required List<Widget> slivers,
   }) {
     return SafeArea(
@@ -144,7 +168,12 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               sliver: SliverToBoxAdapter(
-                child: _GalleryNav(count: projects.length),
+                child: _GalleryNav(
+                  count: totalCount ?? projects.length,
+                  query: _galleryQuery,
+                  onSearch: _showGallerySearch,
+                  onMore: () => _showGalleryMenu(projects),
+                ),
               ),
             ),
             SliverPadding(
@@ -166,12 +195,149 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
       ),
     );
   }
+
+  List<ProjectModel> _filterAndSortProjects(List<ProjectModel> projects) {
+    final query = _galleryQuery.trim().toLowerCase();
+    final visible = query.isEmpty
+        ? [...projects]
+        : projects.where((p) => p.title.toLowerCase().contains(query)).toList();
+
+    switch (_gallerySortMode) {
+      case _GallerySortMode.updatedDesc:
+        visible.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      case _GallerySortMode.nameAsc:
+        visible.sort(
+          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+        );
+    }
+    return visible;
+  }
+
+  String get _gallerySortLabel {
+    switch (_gallerySortMode) {
+      case _GallerySortMode.updatedDesc:
+        return '按更新时间';
+      case _GallerySortMode.nameAsc:
+        return '按名称';
+    }
+  }
+
+  void _showGallerySearch() {
+    final ctrl = TextEditingController(text: _galleryQuery);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('搜索作品'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: '输入作品名称',
+            prefixIcon: Icon(Icons.search_rounded),
+          ),
+          onSubmitted: (value) {
+            setState(() => _galleryQuery = value.trim());
+            Navigator.pop(ctx);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() => _galleryQuery = '');
+              Navigator.pop(ctx);
+            },
+            child: const Text('清除'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => _galleryQuery = ctrl.text.trim());
+              Navigator.pop(ctx);
+            },
+            child: const Text('搜索'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showGalleryMenu(List<ProjectModel> visibleProjects) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('作品操作'),
+        message: Text(_galleryQuery.isEmpty ? '管理作品列表' : '当前搜索：$_galleryQuery'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.invalidate(galleryProvider);
+            },
+            child: const Text('刷新作品'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _expandedProjectId = null);
+              Navigator.pop(ctx);
+            },
+            child: const Text('折叠全部预览'),
+          ),
+          if (visibleProjects.isNotEmpty)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(ctx);
+                context.push('/project/${visibleProjects.first.id}/preview');
+              },
+              child: const Text('打开第一个可见作品'),
+            ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _gallerySortMode = _GallerySortMode.updatedDesc);
+              Navigator.pop(ctx);
+            },
+            child: const Text('按更新时间排序'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _gallerySortMode = _GallerySortMode.nameAsc);
+              Navigator.pop(ctx);
+            },
+            child: const Text('按名称排序'),
+          ),
+          if (_galleryQuery.isNotEmpty)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                setState(() => _galleryQuery = '');
+                Navigator.pop(ctx);
+              },
+              child: const Text('清除搜索'),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('取消'),
+        ),
+      ),
+    );
+  }
 }
 
 class _GalleryNav extends StatelessWidget {
   final int count;
+  final String query;
+  final VoidCallback onSearch;
+  final VoidCallback onMore;
 
-  const _GalleryNav({required this.count});
+  const _GalleryNav({
+    required this.count,
+    required this.query,
+    required this.onSearch,
+    required this.onMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +359,7 @@ class _GalleryNav extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '可玩宇宙样本 · $count 件已生成',
+                '已生成作品 · $count 个',
                 style: const TextStyle(
                   color: AppTheme.textTertiary,
                   fontSize: 13,
@@ -203,13 +369,26 @@ class _GalleryNav extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        const ForgeIconButton(icon: Icons.search_rounded, tooltip: '搜索'),
+        ForgeIconButton(
+          icon: query.isEmpty ? Icons.search_rounded : Icons.search_off_rounded,
+          onTap: onSearch,
+          tooltip: query.isEmpty ? '搜索' : '修改搜索',
+          glow: query.isNotEmpty,
+          accent: AppTheme.tabGallery,
+        ),
         const SizedBox(width: 8),
-        const ForgeIconButton(icon: Icons.more_horiz_rounded, tooltip: '更多'),
+        ForgeIconButton(
+          icon: Icons.more_horiz_rounded,
+          onTap: onMore,
+          tooltip: '更多',
+          accent: AppTheme.tabGallery,
+        ),
       ],
     );
   }
 }
+
+enum _GallerySortMode { updatedDesc, nameAsc }
 
 class _GalleryHero extends StatelessWidget {
   final List<ProjectModel> projects;
@@ -237,7 +416,7 @@ class _GalleryHero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '作品库等待生成',
+                    '还没有作品',
                     style: TextStyle(
                       color: AppTheme.textPrimary,
                       fontSize: 17,
@@ -246,7 +425,7 @@ class _GalleryHero extends StatelessWidget {
                   ),
                   SizedBox(height: 5),
                   Text(
-                    '项目生成后会出现在这里。',
+                    '生成完成的游戏会出现在这里。',
                     style: TextStyle(
                       color: AppTheme.textTertiary,
                       fontSize: 13,
@@ -468,12 +647,16 @@ class _GalleryMessageState extends StatelessWidget {
   final String title;
   final String message;
   final Color accent;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   const _GalleryMessageState({
     required this.icon,
     required this.title,
     required this.message,
     this.accent = AppTheme.textTertiary,
+    this.actionLabel,
+    this.onAction,
   });
 
   @override
@@ -499,6 +682,13 @@ class _GalleryMessageState extends StatelessWidget {
             style: const TextStyle(color: AppTheme.textSecondary, fontSize: 15),
             textAlign: TextAlign.center,
           ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 18),
+            CupertinoButton.filled(
+              onPressed: onAction,
+              child: Text(actionLabel!),
+            ),
+          ],
         ],
       ),
     );

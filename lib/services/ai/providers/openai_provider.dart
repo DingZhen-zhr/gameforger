@@ -29,17 +29,24 @@ class OpenAIProvider extends AiProvider {
     }
   }
 
-  Dio _createDio(String apiKey) => Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      headers: {
-        'Authorization': 'Bearer $apiKey',
-        'Content-Type': 'application/json',
-      },
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 120),
-    ),
-  );
+  Dio _createDio(String apiKey) {
+    final authHeader = ModelRouter.bearerHeader(apiKey);
+    if (authHeader == null) {
+      throw const FormatException('Invalid OpenAI API key format.');
+    }
+
+    return Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 120),
+      ),
+    );
+  }
 
   @override
   Future<Map<String, dynamic>> chat({

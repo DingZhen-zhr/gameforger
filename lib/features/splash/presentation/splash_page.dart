@@ -28,7 +28,7 @@ class SplashPage extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 72),
-                StarRingLoader(label: '正在校准锻造台'),
+                StarRingLoader(label: '正在启动'),
               ],
             ),
           ),

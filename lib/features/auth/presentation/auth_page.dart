@@ -80,7 +80,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _isLogin ? '欢迎回来' : '启动你的创意锻造台',
+                        _isLogin ? '欢迎回来' : '开始创建你的游戏',
                         style: const TextStyle(
                           color: AppTheme.textTertiary,
                           fontSize: 13,

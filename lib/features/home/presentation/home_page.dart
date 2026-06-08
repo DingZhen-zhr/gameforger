@@ -18,6 +18,8 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   int _currentTab = 0;
+  String _projectQuery = '';
+  _ProjectSortMode _projectSortMode = _ProjectSortMode.updatedDesc;
 
   static const _tabs = [
     GlassTabItem(
@@ -127,6 +129,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildProjectsTab(HomeState homeState) {
+    final visibleProjects = _filterAndSortProjects(homeState.projects);
+
     return SafeArea(
       bottom: false,
       child: RefreshIndicator(
@@ -138,8 +142,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               sliver: SliverToBoxAdapter(
                 child: _ProjectsNav(
-                  onRefresh: () =>
-                      ref.read(homeProvider.notifier).loadProjects(),
+                  query: _projectQuery,
+                  onSearch: _showProjectSearch,
+                  onMore: _showProjectsMenu,
                 ),
               ),
             ),
@@ -165,18 +170,31 @@ class _HomePageState extends ConsumerState<HomePage> {
                 hasScrollBody: false,
                 child: _ProjectEmptyState(onCreate: _showNewProjectDialog),
               )
+            else if (visibleProjects.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _ProjectSearchEmptyState(
+                  query: _projectQuery,
+                  onClear: () => setState(() => _projectQuery = ''),
+                ),
+              )
             else ...[
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
                 sliver: SliverToBoxAdapter(
-                  child: ForgeSectionLabel(title: '最近项目', trailing: '按更新时间'),
+                  child: ForgeSectionLabel(
+                    title: _projectQuery.isEmpty ? '最近项目' : '搜索结果',
+                    trailing: _projectQuery.isEmpty
+                        ? _projectSortLabel
+                        : '${visibleProjects.length} 项匹配',
+                  ),
                 ),
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 118),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate((_, i) {
-                    final project = homeState.projects[i];
+                    final project = visibleProjects[i];
                     return _SwipeableProjectTile(
                       project: project,
                       onTap: () =>
@@ -186,11 +204,149 @@ class _HomePageState extends ConsumerState<HomePage> {
                           .read(homeProvider.notifier)
                           .renameProject(project.id, title),
                     );
-                  }, childCount: homeState.projects.length),
+                  }, childCount: visibleProjects.length),
                 ),
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  List<ProjectModel> _filterAndSortProjects(List<ProjectModel> projects) {
+    final query = _projectQuery.trim().toLowerCase();
+    final visible = query.isEmpty
+        ? [...projects]
+        : projects.where((p) => p.title.toLowerCase().contains(query)).toList();
+
+    switch (_projectSortMode) {
+      case _ProjectSortMode.updatedDesc:
+        visible.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      case _ProjectSortMode.nameAsc:
+        visible.sort(
+          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+        );
+      case _ProjectSortMode.status:
+        visible.sort((a, b) {
+          final status = a.status.compareTo(b.status);
+          if (status != 0) return status;
+          return b.updatedAt.compareTo(a.updatedAt);
+        });
+    }
+    return visible;
+  }
+
+  String get _projectSortLabel {
+    switch (_projectSortMode) {
+      case _ProjectSortMode.updatedDesc:
+        return '按更新时间';
+      case _ProjectSortMode.nameAsc:
+        return '按名称';
+      case _ProjectSortMode.status:
+        return '按状态';
+    }
+  }
+
+  void _showProjectSearch() {
+    final ctrl = TextEditingController(text: _projectQuery);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('搜索项目'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: '输入项目名称',
+            prefixIcon: Icon(Icons.search_rounded),
+          ),
+          onSubmitted: (value) {
+            setState(() => _projectQuery = value.trim());
+            Navigator.pop(ctx);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() => _projectQuery = '');
+              Navigator.pop(ctx);
+            },
+            child: const Text('清除'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => _projectQuery = ctrl.text.trim());
+              Navigator.pop(ctx);
+            },
+            child: const Text('搜索'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProjectsMenu() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('项目操作'),
+        message: Text(
+          _projectQuery.isEmpty ? '管理当前项目列表' : '当前搜索：$_projectQuery',
+        ),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _showNewProjectDialog();
+            },
+            child: const Text('新建项目'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(homeProvider.notifier).loadProjects();
+            },
+            child: const Text('刷新列表'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _projectSortMode = _ProjectSortMode.updatedDesc);
+              Navigator.pop(ctx);
+            },
+            child: const Text('按更新时间排序'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _projectSortMode = _ProjectSortMode.nameAsc);
+              Navigator.pop(ctx);
+            },
+            child: const Text('按名称排序'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _projectSortMode = _ProjectSortMode.status);
+              Navigator.pop(ctx);
+            },
+            child: const Text('按状态排序'),
+          ),
+          if (_projectQuery.isNotEmpty)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                setState(() => _projectQuery = '');
+                Navigator.pop(ctx);
+              },
+              child: const Text('清除搜索'),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('取消'),
         ),
       ),
     );
@@ -222,7 +378,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '锻造台已就绪',
+                      '项目面板',
                       style: TextStyle(
                         color: AppTheme.textPrimary,
                         fontSize: 16,
@@ -319,9 +475,15 @@ class _HomePageState extends ConsumerState<HomePage> {
 }
 
 class _ProjectsNav extends StatelessWidget {
-  final VoidCallback onRefresh;
+  final String query;
+  final VoidCallback onSearch;
+  final VoidCallback onMore;
 
-  const _ProjectsNav({required this.onRefresh});
+  const _ProjectsNav({
+    required this.query,
+    required this.onSearch,
+    required this.onMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -343,24 +505,31 @@ class _ProjectsNav extends StatelessWidget {
               ),
               SizedBox(height: 6),
               Text(
-                'Cosmic Forge 控制台',
+                '管理项目和生成记录',
                 style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
               ),
             ],
           ),
         ),
         const SizedBox(width: 12),
-        ForgeIconButton(icon: Icons.search_rounded, tooltip: '搜索'),
+        ForgeIconButton(
+          icon: query.isEmpty ? Icons.search_rounded : Icons.search_off_rounded,
+          onTap: onSearch,
+          tooltip: query.isEmpty ? '搜索' : '修改搜索',
+          glow: query.isNotEmpty,
+        ),
         const SizedBox(width: 8),
         ForgeIconButton(
           icon: Icons.more_horiz_rounded,
-          onTap: onRefresh,
-          tooltip: '同步',
+          onTap: onMore,
+          tooltip: '更多',
         ),
       ],
     );
   }
 }
+
+enum _ProjectSortMode { updatedDesc, nameAsc, status }
 
 class _HeroStat extends StatelessWidget {
   final String value;
@@ -471,6 +640,41 @@ class _ProjectEmptyState extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectSearchEmptyState extends StatelessWidget {
+  final String query;
+  final VoidCallback onClear;
+
+  const _ProjectSearchEmptyState({required this.query, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.search_off_rounded,
+            size: 44,
+            color: AppTheme.textTertiary,
+          ),
+          const SizedBox(height: 14),
+          Text('没有找到项目', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(
+            '没有名称包含「$query」的项目。',
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 18),
+          CupertinoButton.filled(onPressed: onClear, child: const Text('清除搜索')),
         ],
       ),
     );

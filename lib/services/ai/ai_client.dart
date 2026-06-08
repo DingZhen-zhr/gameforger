@@ -1,20 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'model_router.dart';
 
 class AiClient {
   final Dio _dio;
 
   AiClient({String? apiKey})
-      : _dio = Dio(BaseOptions(
+    : _dio = Dio(
+        BaseOptions(
           baseUrl: 'https://api.deepseek.com/v1',
           headers: {
-            'Authorization': 'Bearer ${apiKey ?? ''}',
+            if (apiKey != null && ModelRouter.bearerHeader(apiKey) != null)
+              'Authorization': ModelRouter.bearerHeader(apiKey)!,
             'Content-Type': 'application/json',
           },
           connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(seconds: 120),
-        ));
+        ),
+      );
 
   Future<Map<String, dynamic>> chat({
     required List<Map<String, String>> messages,
@@ -32,9 +36,12 @@ class AiClient {
         'max_tokens': maxTokens,
         'stream': false,
       },
-      options: Options(headers: {
-        if (apiKey != null) 'Authorization': 'Bearer $apiKey',
-      }),
+      options: Options(
+        headers: {
+          if (apiKey != null && ModelRouter.bearerHeader(apiKey) != null)
+            'Authorization': ModelRouter.bearerHeader(apiKey)!,
+        },
+      ),
     );
     return response.data as Map<String, dynamic>;
   }
@@ -58,7 +65,8 @@ class AiClient {
       },
       options: Options(
         headers: {
-          if (apiKey != null) 'Authorization': 'Bearer $apiKey',
+          if (apiKey != null && ModelRouter.bearerHeader(apiKey) != null)
+            'Authorization': ModelRouter.bearerHeader(apiKey)!,
         },
         responseType: ResponseType.stream,
       ),

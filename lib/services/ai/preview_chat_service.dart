@@ -120,6 +120,14 @@ new_value: 你提取的新值
       final fullContent = buffer.toString();
       return _parseResponse(fullContent);
     } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('Invalid HTTP header field value') ||
+          msg.contains('Invalid DeepSeek API key format')) {
+        return PreviewChatResult(
+          explanation:
+              'AI Key 格式异常：代码/推理模型的自定义 Key 里包含乱码、空格或换行。请到「设置 → API 配置」关闭自定义 Key，或重新粘贴纯文本 DeepSeek Key 后测试连接。',
+        );
+      }
       return PreviewChatResult(explanation: '抱歉，AI 服务暂时无法响应。请稍后重试。\n\n错误: $e');
     }
   }

@@ -26,17 +26,24 @@ class MiniMaxProvider extends AiProvider {
     }
   }
 
-  Dio _createDio(String apiKey) => Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      headers: {
-        'Authorization': 'Bearer $apiKey',
-        'Content-Type': 'application/json',
-      },
-      connectTimeout: const Duration(seconds: 90),
-      receiveTimeout: const Duration(seconds: 300),
-    ),
-  );
+  Dio _createDio(String apiKey) {
+    final authHeader = ModelRouter.bearerHeader(apiKey);
+    if (authHeader == null) {
+      throw const FormatException('Invalid MiniMax API key format.');
+    }
+
+    return Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        connectTimeout: const Duration(seconds: 90),
+        receiveTimeout: const Duration(seconds: 300),
+      ),
+    );
+  }
 
   @override
   Future<Map<String, dynamic>> chat({

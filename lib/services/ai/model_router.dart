@@ -74,15 +74,61 @@ class ModelRouter {
 
   // --------------- API Key Management ---------------
 
+  static String sanitizeApiKey(String key) {
+    final buffer = StringBuffer();
+    for (final rune in key.runes) {
+      if (_isIgnorableKeyRune(rune)) continue;
+      buffer.writeCharCode(rune);
+    }
+    return buffer.toString().trim();
+  }
+
+  static bool _isIgnorableKeyRune(int rune) {
+    return rune == 0x09 ||
+        rune == 0x0A ||
+        rune == 0x0B ||
+        rune == 0x0C ||
+        rune == 0x0D ||
+        rune == 0x20 ||
+        rune == 0xA0 ||
+        rune == 0x1680 ||
+        rune == 0x180E ||
+        (rune >= 0x2000 && rune <= 0x200D) ||
+        rune == 0x2028 ||
+        rune == 0x2029 ||
+        rune == 0x202F ||
+        rune == 0x205F ||
+        rune == 0x3000 ||
+        rune == 0xFEFF;
+  }
+
+  static bool isValidApiKey(String key) {
+    final sanitized = sanitizeApiKey(key);
+    if (sanitized.isEmpty) return false;
+    return sanitized.codeUnits.every((unit) => unit >= 33 && unit <= 126);
+  }
+
+  static String? bearerHeader(String key) {
+    final sanitized = sanitizeApiKey(key);
+    if (!isValidApiKey(sanitized)) return null;
+    return 'Bearer $sanitized';
+  }
+
   static Future<String> getApiKey(ModelType type) async {
     final useCustom = await _storage.read(key: _useCustomKey(type));
     if (useCustom == 'true') {
       final key = await _storage.read(key: _keyKey(type));
-      if (key != null && key.isNotEmpty) return key;
+      if (key != null && key.isNotEmpty) {
+        final sanitized = sanitizeApiKey(key);
+        if (isValidApiKey(sanitized)) return sanitized;
+      }
     }
     // Fall back to development default (e.g. Claude key compiled in).
     final defaultKey = defaultApiKeys[type];
-    if (defaultKey != null && defaultKey.isNotEmpty) return defaultKey;
+    if (defaultKey != null && defaultKey.isNotEmpty) {
+      final sanitized = sanitizeApiKey(defaultKey);
+      if (isValidApiKey(sanitized)) return sanitized;
+    }
     return '';
   }
 
@@ -91,8 +137,15 @@ class ModelRouter {
     return val == 'true';
   }
 
+  static Future<String> getCustomApiKey(ModelType type) async {
+    final key = await _storage.read(key: _keyKey(type));
+    if (key == null || key.isEmpty) return '';
+    final sanitized = sanitizeApiKey(key);
+    return isValidApiKey(sanitized) ? sanitized : '';
+  }
+
   static Future<void> setApiKey(ModelType type, String key) async {
-    await _storage.write(key: _keyKey(type), value: key);
+    await _storage.write(key: _keyKey(type), value: sanitizeApiKey(key));
   }
 
   static Future<void> setUseCustom(ModelType type, bool value) async {

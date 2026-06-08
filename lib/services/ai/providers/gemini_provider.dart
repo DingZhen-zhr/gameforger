@@ -25,14 +25,24 @@ class GeminiProvider extends AiProvider {
     }
   }
 
-  Dio _createDio(String apiKey) => Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      headers: {'x-goog-api-key': apiKey, 'Content-Type': 'application/json'},
-      connectTimeout: const Duration(seconds: 90),
-      receiveTimeout: const Duration(seconds: 240),
-    ),
-  );
+  Dio _createDio(String apiKey) {
+    final sanitizedKey = ModelRouter.sanitizeApiKey(apiKey);
+    if (!ModelRouter.isValidApiKey(sanitizedKey)) {
+      throw const FormatException('Invalid Gemini API key format.');
+    }
+
+    return Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        headers: {
+          'x-goog-api-key': sanitizedKey,
+          'Content-Type': 'application/json',
+        },
+        connectTimeout: const Duration(seconds: 90),
+        receiveTimeout: const Duration(seconds: 240),
+      ),
+    );
+  }
 
   @override
   Future<Map<String, dynamic>> chat({

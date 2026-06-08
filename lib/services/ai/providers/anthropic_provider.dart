@@ -25,18 +25,25 @@ class AnthropicProvider extends AiProvider {
     }
   }
 
-  Dio _createDio(String apiKey) => Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-      },
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 120),
-    ),
-  );
+  Dio _createDio(String apiKey) {
+    final sanitizedKey = ModelRouter.sanitizeApiKey(apiKey);
+    if (!ModelRouter.isValidApiKey(sanitizedKey)) {
+      throw const FormatException('Invalid Anthropic API key format.');
+    }
+
+    return Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        headers: {
+          'x-api-key': sanitizedKey,
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+        },
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 120),
+      ),
+    );
+  }
 
   /// Separates system message from the messages list for Anthropic's API format.
   Map<String, dynamic> _buildRequestBody({

@@ -95,7 +95,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 118),
         children: [
-          const _SettingsNav(),
+          _SettingsNav(onMore: _showSettingsMenu),
           const SizedBox(height: 16),
           _SettingsHero(
             displayName: displayName,
@@ -120,10 +120,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 accent: AppTheme.gold,
                 title: '点数中心',
                 subtitle: '查看余额、购买点数',
-                badge: const ForgeChip(
-                  label: 'Credits',
-                  tone: ForgeChipTone.gold,
-                ),
+                badge: const ForgeChip(label: '点数', tone: ForgeChipTone.gold),
                 onTap: () => context.push('/settings/credits'),
               ),
             ],
@@ -151,7 +148,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           const SizedBox(height: 26),
           const Text(
-            'GameForger · Forge OS 1.4',
+            'GameForger 1.4',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppTheme.textTertiary,
@@ -203,10 +200,96 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ],
     );
   }
+
+  void _showSettingsMenu() {
+    final authState = ref.read(authProvider);
+    final email = authState.user?.email ?? '未知';
+    final displayName = _username.isNotEmpty ? _username : email;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surfaceVariant,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            email,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_rounded),
+                title: const Text('修改用户名'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _editUsername();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.sync_rounded),
+                title: const Text('刷新账号信息'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() => _loadingProfile = true);
+                  _loadProfile();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SettingsNav extends StatelessWidget {
-  const _SettingsNav();
+  final VoidCallback onMore;
+
+  const _SettingsNav({required this.onMore});
 
   @override
   Widget build(BuildContext context) {
@@ -228,14 +311,18 @@ class _SettingsNav extends StatelessWidget {
               ),
               SizedBox(height: 6),
               Text(
-                '身份、模型与系统核心',
+                '账号与设置',
                 style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
               ),
             ],
           ),
         ),
         const SizedBox(width: 12),
-        const ForgeIconButton(icon: Icons.more_horiz_rounded, tooltip: '更多'),
+        ForgeIconButton(
+          icon: Icons.more_horiz_rounded,
+          onTap: onMore,
+          tooltip: '更多',
+        ),
       ],
     );
   }
@@ -370,15 +457,11 @@ class _SettingsHero extends StatelessWidget {
           const Row(
             children: [
               Expanded(
-                child: _ControlMetric(
-                  label: '剩余点数',
-                  value: 'Credits',
-                  gold: true,
-                ),
+                child: _ControlMetric(label: '剩余点数', value: '查看余额', gold: true),
               ),
               SizedBox(width: 12),
               Expanded(
-                child: _ControlMetric(label: '模型路由', value: '4 routes'),
+                child: _ControlMetric(label: '模型配置', value: '4 项'),
               ),
             ],
           ),
@@ -476,6 +559,7 @@ class _ActionGlassTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

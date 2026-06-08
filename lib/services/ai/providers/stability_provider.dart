@@ -15,15 +15,21 @@ class StabilityProvider extends AiProvider {
     return '';
   }
 
-  Dio _createDio(String apiKey) => Dio(BaseOptions(
+  Dio _createDio(String apiKey) {
+    final authHeader = ModelRouter.bearerHeader(apiKey);
+    if (authHeader == null) {
+      throw const FormatException('Invalid Stability API key format.');
+    }
+
+    return Dio(
+      BaseOptions(
         baseUrl: baseUrl,
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Accept': 'application/json',
-        },
+        headers: {'Authorization': authHeader, 'Accept': 'application/json'},
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 120),
-      ));
+      ),
+    );
+  }
 
   @override
   Future<Map<String, dynamic>> chat({
@@ -84,9 +90,12 @@ class StabilityProvider extends AiProvider {
         if (url != null) return url;
       }
       // Some endpoints return base64 in the response
-      final base64 = (artifacts?.first as Map<String, dynamic>?)?.values
-          .firstWhere((v) => v is String && v.length > 100,
-              orElse: () => null) as String?;
+      final base64 =
+          (artifacts?.first as Map<String, dynamic>?)?.values.firstWhere(
+                (v) => v is String && v.length > 100,
+                orElse: () => null,
+              )
+              as String?;
       if (base64 != null && base64.length > 100) {
         return 'data:image/jpeg;base64,$base64';
       }
