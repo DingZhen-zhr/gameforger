@@ -40,11 +40,9 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        ref
-            .read(previewProvider(widget.projectId).notifier)
-            .setTab(_tabController.index);
-      }
+      ref
+          .read(previewProvider(widget.projectId).notifier)
+          .setTab(_tabController.index);
     });
     // Consume any pending HTML set by the workspace before navigation.
     // On the first visit this is a no-op ([_init] handles it); on
@@ -146,8 +144,8 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: TabBarView(
-                          controller: _tabController,
+                        child: IndexedStack(
+                          index: state.selectedTab,
                           children: [
                             CodePanel(
                               projectId: widget.projectId,

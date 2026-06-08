@@ -26,7 +26,8 @@ class AssetPanel extends StatefulWidget {
   State<AssetPanel> createState() => _AssetPanelState();
 }
 
-class _AssetPanelState extends State<AssetPanel> {
+class _AssetPanelState extends State<AssetPanel>
+  with AutomaticKeepAliveClientMixin {
   final _imagePromptController = TextEditingController();
   bool _isGenerating = false;
   String? _generatedImageUrl;
@@ -35,6 +36,8 @@ class _AssetPanelState extends State<AssetPanel> {
   String? _generatedMusicUrl;
   String? _generationError;
   int _generationRunId = 0;
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void dispose() {
@@ -53,6 +56,7 @@ class _AssetPanelState extends State<AssetPanel> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final html = widget.htmlCode;
     final assets = _extractAssets(html);
 

@@ -150,6 +150,27 @@ new_value: 新值
 
 注意：只有当用户的请求确实改变了某个维度的定义时才附加 SPEC_UPDATE，不要过度推断。''';
   }
+  static const int _maxContextTokens = 30000;
+  static const int _reservedOutputTokens = 4096;
+  static const int _maxHtmlTokens = 15000;
+
+  static int _estimateTokens(String text) => (text.length / 3.5).ceil();
+
+  String _truncateHtml(String html, int maxTokens) {
+    final estimated = _estimateTokens(html);
+    if (estimated <= maxTokens) return html;
+    final maxChars = (maxTokens * 3.5).floor();
+    final keepEach = maxChars ~/ 2;
+    final head = html.substring(0, keepEach);
+    final tail = html.substring(html.length - keepEach);
+    return '$head\n\n/* ... 中间部分已省略（代码过长）... */\n\n$tail';
+  }
+
+  String _truncateMessage(String content, int maxTokens) {
+    if (_estimateTokens(content) <= maxTokens) return content;
+    final maxChars = (maxTokens * 3.5).floor();
+    return '${content.substring(0, maxChars)}\n...(已截断)';
+  }
 
   /// Stream the AI response, returning the parsed agent result.
   Future<PreviewAgentResult> processModificationStream({
@@ -161,20 +182,45 @@ new_value: 新值
   }) async {
     final systemPrompt = _buildSystemPrompt(gameSpec);
 
+    final truncatedHtml = _truncateHtml(currentHtml, _maxHtmlTokens);
+
     final messages = <Map<String, String>>[
       {'role': 'system', 'content': systemPrompt},
       {
         'role': 'user',
-        'content': '这是当前游戏的完整 HTML 代码：\n\n```html\n$currentHtml\n```\n\n',
+        'content': '这是当前游戏的完整 HTML 代码：\n\n```html\n$truncatedHtml\n```\n\n',
       },
     ];
 
-    // Include recent chat history (last 4 exchanges)
-    final recentHistory = chatHistory.length > 8
-        ? chatHistory.sublist(chatHistory.length - 8)
+    int usedTokens = _estimateTokens(systemPrompt) +
+        _estimateTokens(truncatedHtml) +
+        _estimateTokens(userMessage) +
+        _reservedOutputTokens;
+
+    final recentHistory = chatHistory.length > 4
+        ? chatHistory.sublist(chatHistory.length - 4)
         : chatHistory;
-    for (final msg in recentHistory) {
-      messages.add(Map.of(msg));
+
+    final budgetForHistory = _maxContextTokens - usedTokens;
+    if (budgetForHistory > 0) {
+      int historyTokens = 0;
+      final trimmedHistory = <Map<String, String>>[];
+      for (final msg in recentHistory.reversed) {
+        final content = msg['content'] ?? '';
+        var msgTokens = _estimateTokens(content);
+        if (historyTokens + msgTokens > budgetForHistory) {
+          if (trimmedHistory.isEmpty) {
+            final truncated = _truncateMessage(content, budgetForHistory - historyTokens);
+            trimmedHistory.insert(0, {...msg, 'content': truncated});
+          }
+          break;
+        }
+        historyTokens += msgTokens;
+        trimmedHistory.insert(0, msg);
+      }
+      for (final msg in trimmedHistory) {
+        messages.add(Map.of(msg));
+      }
     }
 
     // Add the current user message
@@ -215,6 +261,21 @@ new_value: 新值
               '请充值点数，或在「设置 → API 配置」中添加您自己的 API Key。',
         );
       }
+
+      if (msg.contains('maximum context length') ||
+          msg.contains('context_length_exceeded') ||
+          msg.contains('max_tokens') ||
+          msg.contains('token')) {
+        return PreviewAgentResult(
+          message:
+              '对话内容过长，超出了模型的上下文限制。\n\n'
+              '解决方法：\n'
+              '1. 点击右上角清空对话记录，然后重新提问\n'
+              '2. 尝试简化您的问题描述\n'
+              '3. 如果游戏代码很长，可以尝试描述具体要修改的部分',
+        );
+      }
+
       return PreviewAgentResult(
         message:
             '抱歉，AI 服务暂时无法响应。请稍后重试。\n\n'

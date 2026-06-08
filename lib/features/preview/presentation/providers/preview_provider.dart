@@ -240,6 +240,7 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
   }
 
   void setTab(int index) {
+    if (state.selectedTab == index) return;
     state = state.copyWith(selectedTab: index);
   }
 
