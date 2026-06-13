@@ -128,12 +128,16 @@ class WorkspacePage extends ConsumerWidget {
 
     // Track cancellation state
     bool cancelled = false;
+    var dialogOpen = true;
+    var generationStage = '阶段 0/2：准备生成';
+    StateSetter? updateDialog;
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
+          updateDialog = setDialogState;
           return AlertDialog(
             backgroundColor: AppTheme.surfaceVariant,
             content: Column(
@@ -149,20 +153,37 @@ class WorkspacePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'AI 正在生成游戏...',
+                  generationStage,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppTheme.textPrimary, fontSize: 14),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '设计文档 → 代码生成\n超时限制 3 分钟',
+                  'AI 会先生成设计文档，再生成 HTML5 代码；若检测到不可玩或结构异常，会自动尝试修正。',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const _AiBoundaryNotice(compact: true),
+                const SizedBox(height: 10),
+                Text(
+                  '提示：AI 生成内容可能有误，请在预览中实际测试游戏规则、碰撞和胜负条件。',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppTheme.gold.withValues(alpha: 0.88),
+                    fontSize: 11,
+                    height: 1.35,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
                     cancelled = true;
+                    dialogOpen = false;
                     Navigator.of(ctx).pop();
                   },
                   child: Text(
@@ -180,7 +201,18 @@ class WorkspacePage extends ConsumerWidget {
     try {
       final service = GameGenService();
       final html = await service
-          .generateGame(spec)
+          .generateGame(
+            spec,
+            onProgress: (message) {
+              if (!dialogOpen) return;
+              final setter = updateDialog;
+              if (setter != null) {
+                setter(() => generationStage = message);
+              } else {
+                generationStage = message;
+              }
+            },
+          )
           .timeout(
             const Duration(minutes: 3),
             onTimeout: () => throw Exception(
@@ -202,11 +234,13 @@ class WorkspacePage extends ConsumerWidget {
       }
 
       if (context.mounted) {
+        dialogOpen = false;
         Navigator.of(context).pop();
         context.push('/project/$projectId/preview');
       }
     } on DeductException catch (e) {
       if (context.mounted) {
+        dialogOpen = false;
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -218,6 +252,7 @@ class WorkspacePage extends ConsumerWidget {
     } catch (e) {
       if (cancelled) return;
       if (context.mounted) {
+        dialogOpen = false;
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -309,6 +344,46 @@ class _WorkspaceTopBar extends StatelessWidget {
   }
 }
 
+class _AiBoundaryNotice extends StatelessWidget {
+  final bool compact;
+
+  const _AiBoundaryNotice({this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 10 : 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.045),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: compact ? 15 : 17,
+            color: AppTheme.secondary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'AI 能力边界：目前支持生成和修改单文件 2D HTML5 Canvas 游戏；不支持 3D 引擎、多人联网、账号后端、真实支付、云存档或外部服务器逻辑。',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: compact ? 10.8 : 12,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
@@ -333,6 +408,8 @@ class _EmptyState extends StatelessWidget {
               ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 18),
+            const _AiBoundaryNotice(),
           ],
         ),
       ),

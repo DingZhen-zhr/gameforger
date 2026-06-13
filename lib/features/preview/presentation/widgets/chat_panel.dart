@@ -139,6 +139,19 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
               textAlign: TextAlign.center,
               style: TextStyle(color: AppTheme.textTertiary, fontSize: 12),
             ),
+            const SizedBox(height: 18),
+            _TransparencyNotice(
+              icon: Icons.info_outline,
+              title: 'AI 能力边界',
+              body: '我可以修改当前 2D HTML5 Canvas 游戏；不支持 3D、多人联网、后端服务、真实支付或外部服务器逻辑。',
+            ),
+            const SizedBox(height: 8),
+            _TransparencyNotice(
+              icon: Icons.fact_check_outlined,
+              title: '请验证生成结果',
+              body: 'AI 可能误解需求或生成不可玩逻辑，请通过预览、试玩和差异审核确认修改是否正确。',
+              accent: AppTheme.gold,
+            ),
           ],
         ),
       ),
@@ -189,7 +202,7 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
             Padding(
               padding: const EdgeInsets.only(left: 4, top: 2),
               child: Text(
-                _formatTime(DateTime.now()),
+                '${msg.modelLabel == null ? '由 AI 生成' : '由 ${msg.modelLabel} 生成'} · ${_formatTime(DateTime.now())}',
                 style: TextStyle(fontSize: 10, color: AppTheme.textTertiary),
               ),
             ),
@@ -349,6 +362,64 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
 
   String _formatTime(DateTime dt) {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _TransparencyNotice extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  final Color accent;
+
+  const _TransparencyNotice({
+    required this.icon,
+    required this.title,
+    required this.body,
+    this.accent = const Color(0xFF4FC9E8),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceVariant.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  body,
+                  style: TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 10.8,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

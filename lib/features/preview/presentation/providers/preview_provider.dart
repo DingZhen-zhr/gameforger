@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../services/storage/local_db_service.dart';
 import '../../../../services/supabase/game_build_service.dart';
 import '../../../../services/supabase/supabase_client.dart';
+import '../../../../services/ai/model_router.dart';
 import '../../data/sample_game.dart';
 import '../../../../services/ai/preview_agent_service.dart';
 import '../../../workspace/presentation/providers/workspace_provider.dart';
@@ -39,21 +40,27 @@ class PreviewChatMessage {
   final bool isUser;
   final String content;
   final bool isStreaming;
+  final String? modelLabel;
 
   const PreviewChatMessage({
     required this.id,
     required this.isUser,
     required this.content,
     this.isStreaming = false,
+    this.modelLabel,
   });
 
-  PreviewChatMessage copyWith({String? content, bool? isStreaming}) =>
-      PreviewChatMessage(
-        id: id,
-        isUser: isUser,
-        content: content ?? this.content,
-        isStreaming: isStreaming ?? this.isStreaming,
-      );
+  PreviewChatMessage copyWith({
+    String? content,
+    bool? isStreaming,
+    String? modelLabel,
+  }) => PreviewChatMessage(
+    id: id,
+    isUser: isUser,
+    content: content ?? this.content,
+    isStreaming: isStreaming ?? this.isStreaming,
+    modelLabel: modelLabel ?? this.modelLabel,
+  );
 }
 
 /// A proposed code edit shown in the diff review panel.
@@ -295,6 +302,7 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
     if (state.agentState != AgentState.idle) return;
 
     final id = 'chat_${DateTime.now().millisecondsSinceEpoch}';
+    final modelLabel = await _currentCodeModelLabel();
     final userMsg = PreviewChatMessage(
       id: '${id}_user',
       isUser: true,
@@ -306,6 +314,7 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
       isUser: false,
       content: '',
       isStreaming: true,
+      modelLabel: modelLabel,
     );
 
     state = state.copyWith(
@@ -527,6 +536,15 @@ class PreviewNotifier extends StateNotifier<PreviewState> {
       agentState: AgentState.idle,
       agentErrorMessage: null,
     );
+  }
+
+  Future<String> _currentCodeModelLabel() async {
+    try {
+      final provider = await ModelRouter.getProvider(ModelType.code);
+      return provider == null || provider.isEmpty ? '当前 AI 模型' : provider;
+    } catch (_) {
+      return '当前 AI 模型';
+    }
   }
 
   void _updateChatMessage(String id, String content, bool streaming) {

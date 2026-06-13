@@ -29,6 +29,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
   InAppWebViewController? _webViewController;
   late TabController _tabController;
   bool _isRegenerating = false;
+  String _regenerationStatus = 'AI 正在重新生成游戏';
 
   // WebView load state tracking
   bool _isWebViewLoading = true;
@@ -181,7 +182,9 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
               if (_isRegenerating)
                 Container(
                   color: Colors.black.withValues(alpha: 0.62),
-                  child: Center(child: StarRingLoader(label: 'AI 正在重新生成游戏')),
+                  child: Center(
+                    child: StarRingLoader(label: _regenerationStatus),
+                  ),
                 ),
             ],
           ),
@@ -207,13 +210,21 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
 
   Future<void> _onRegenerate(PreviewNotifier notifier) async {
     if (_isRegenerating) return;
-    setState(() => _isRegenerating = true);
+    setState(() {
+      _isRegenerating = true;
+      _regenerationStatus = '阶段 0/2：准备重新生成';
+    });
 
     try {
       final spec = ref.read(workspaceProvider(widget.projectId)).gameSpec;
       final service = GameGenService();
       final html = await service
-          .generateGame(spec)
+          .generateGame(
+            spec,
+            onProgress: (message) {
+              if (mounted) setState(() => _regenerationStatus = message);
+            },
+          )
           .timeout(
             const Duration(minutes: 3),
             onTimeout: () => throw Exception('游戏生成超时（3分钟），请简化游戏设定后重试。'),

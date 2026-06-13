@@ -9,6 +9,8 @@ import 'templates/template_registry.dart';
 import '../credits/credit_service.dart';
 import '../../features/workspace/domain/game_spec.dart';
 
+typedef GameGenerationProgress = void Function(String message);
+
 class GameGenService {
   final AiProxy _proxy;
   static const _maxRetries = 1;
@@ -25,7 +27,11 @@ class GameGenService {
   /// genre-matched template's design prompt.
   /// Returns null if design generation fails (caller should fall back to
   /// single-pass generation).
-  Future<GameDesignDocument?> generateDesign(GameSpec spec) async {
+  Future<GameDesignDocument?> generateDesign(
+    GameSpec spec, {
+    GameGenerationProgress? onProgress,
+  }) async {
+    onProgress?.call('阶段 1/2：正在生成游戏设计文档');
     final template = TemplateRegistry.resolve(spec.genre);
     final prompt = template.buildDesignPrompt(spec);
 
@@ -81,10 +87,12 @@ class GameGenService {
 
         if (attempt >= _maxDesignRetries) {
           // Return doc even if imperfect — code gen can still try
+          onProgress?.call('AI 检测到设计文档可能存在问题，正在带着校验结果继续生成');
           return doc;
         }
 
         // Feed issues back for retry
+        onProgress?.call('AI 检测到设计文档可能存在问题，正在自动修正');
         final feedback = [
           'The design document has these issues:',
           ...allIssues.map((i) => '  - $i'),
@@ -107,22 +115,38 @@ class GameGenService {
   // ─── Pass 2: Code Generation ───────────────────────────────────────
 
   /// Generates HTML5 game code from a [GameDesignDocument] and [GameSpec].
-  Future<String> generateCode(GameDesignDocument doc, GameSpec spec) async {
+  Future<String> generateCode(
+    GameDesignDocument doc,
+    GameSpec spec, {
+    GameGenerationProgress? onProgress,
+  }) async {
+    onProgress?.call('阶段 2/2：正在生成可运行 HTML5 游戏代码');
     final template = TemplateRegistry.resolve(spec.genre);
-    return _generateCodeWithRetry(doc, spec, template, 0);
+    return _generateCodeWithRetry(
+      doc,
+      spec,
+      template,
+      0,
+      onProgress: onProgress,
+    );
   }
 
   Future<String> _generateCodeWithRetry(
     GameDesignDocument doc,
     GameSpec spec,
     GameTemplate template,
-    int attempt,
-  ) async {
+    int attempt, {
+    GameGenerationProgress? onProgress,
+  }) async {
     final combinedFeedback = attempt > 0
         ? _previousFailures
         : _previousDesignIssues;
-    final prompt = _buildCodePrompt(doc, spec, template,
-        feedback: combinedFeedback);
+    final prompt = _buildCodePrompt(
+      doc,
+      spec,
+      template,
+      feedback: combinedFeedback,
+    );
 
     try {
       final result = await _proxy
@@ -142,19 +166,24 @@ class GameGenService {
           )
           .timeout(_callTimeout);
 
-      final content =
-          result['choices']?[0]?['message']?['content'] as String?;
+      final content = result['choices']?[0]?['message']?['content'] as String?;
       if (content == null || content.isEmpty) {
         throw const GameGenException('AI returned empty code', true);
       }
 
       final html = _extractHtml(content);
-      final validation =
-          _validateCode(html, spec, template);
+      final validation = _validateCode(html, spec, template);
 
       if (!validation.isValid && attempt < _maxRetries) {
+        onProgress?.call('AI 检测到生成结果可能不可玩，正在自动修正');
         _previousFailures = validation.issues.join('\n');
-        return _generateCodeWithRetry(doc, spec, template, attempt + 1);
+        return _generateCodeWithRetry(
+          doc,
+          spec,
+          template,
+          attempt + 1,
+          onProgress: onProgress,
+        );
       }
 
       return html;
@@ -164,8 +193,15 @@ class GameGenService {
       if (attempt >= _maxRetries) {
         throw GameGenException('Code generation failed: $e', true);
       }
+      onProgress?.call('AI 生成失败，正在尝试恢复并重新生成');
       _previousFailures = 'Generation error: $e';
-      return _generateCodeWithRetry(doc, spec, template, attempt + 1);
+      return _generateCodeWithRetry(
+        doc,
+        spec,
+        template,
+        attempt + 1,
+        onProgress: onProgress,
+      );
     }
   }
 
@@ -177,31 +213,42 @@ class GameGenService {
   /// Convenience method: tries two-pass generation (design → code).
   /// Falls back to single-pass code generation if the design pass fails,
   /// so the user always gets a game even when the AI can't produce clean JSON.
-  Future<String> generateGame(GameSpec spec) async {
+  Future<String> generateGame(
+    GameSpec spec, {
+    GameGenerationProgress? onProgress,
+  }) async {
     try {
-      final doc = await generateDesign(spec);
+      final doc = await generateDesign(spec, onProgress: onProgress);
       if (doc != null) {
-        return generateCode(doc, spec);
+        return generateCode(doc, spec, onProgress: onProgress);
       }
     } catch (_) {
       // Design pass failed — fall through to single-pass
     }
 
     // Fallback: single-pass generation from spec directly
-    return _generateCodeSinglePass(spec);
+    onProgress?.call('设计文档生成未完成，正在切换到单阶段恢复生成');
+    return _generateCodeSinglePass(spec, onProgress: onProgress);
   }
 
   /// Single-pass fallback: generates HTML directly from GameSpec,
   /// bypassing the design document stage. Used when Pass 1 fails.
   /// Includes playability validation with one retry.
-  Future<String> _generateCodeSinglePass(GameSpec spec) async {
+  Future<String> _generateCodeSinglePass(
+    GameSpec spec, {
+    GameGenerationProgress? onProgress,
+  }) async {
+    onProgress?.call('恢复模式：正在直接生成可运行 HTML5 游戏');
     final template = TemplateRegistry.resolve(spec.genre);
     String? lastFailureFeedback;
 
     for (int attempt = 0; attempt <= _maxRetries; attempt++) {
       try {
-        final prompt = _buildSinglePassPrompt(spec, template,
-            feedback: lastFailureFeedback);
+        final prompt = _buildSinglePassPrompt(
+          spec,
+          template,
+          feedback: lastFailureFeedback,
+        );
 
         final result = await _proxy
             .chat(
@@ -234,6 +281,7 @@ class GameGenService {
         final validation = _validateCode(html, spec, template);
 
         if (!validation.isValid && attempt < _maxRetries) {
+          onProgress?.call('AI 检测到生成结果可能不可玩，正在自动修正');
           lastFailureFeedback = validation.issues.join('\n');
           continue;
         }
@@ -254,12 +302,15 @@ class GameGenService {
     );
   }
 
-  String _buildSinglePassPrompt(GameSpec spec, GameTemplate template, {
+  String _buildSinglePassPrompt(
+    GameSpec spec,
+    GameTemplate template, {
     String? feedback,
   }) {
     final buf = StringBuffer();
     buf.writeln(
-        'You are a senior HTML5 game developer. Generate a complete, self-contained HTML file for a ${template.genreName} game.');
+      'You are a senior HTML5 game developer. Generate a complete, self-contained HTML file for a ${template.genreName} game.',
+    );
     buf.writeln();
 
     // Spec summary
@@ -295,18 +346,32 @@ class GameGenService {
     buf.writeln();
     buf.writeln('## Code Skeleton Reference');
     buf.writeln('```html');
-    buf.writeln(template.codeSkeleton
-        .replaceAll('{{GRAVITY}}', template.defaultPhysics['gravity']?.toString() ?? '0.5')
-        .replaceAll('{{FRICTION}}', template.defaultPhysics['friction']?.toString() ?? '0.8')
-        .replaceAll('{{JUMP_FORCE}}', template.defaultPhysics['jumpForce']?.toString() ?? '12')
-        .replaceAll('{{MOVE_SPEED}}', template.defaultPhysics['moveSpeed']?.toString() ?? '4')
-        .replaceAll('{{SCROLL_SPEED}}', '4')
-        .replaceAll('{{SPEED_INCREMENT}}', '0.002')
-        .replaceAll('{{ROWS}}', '8')
-        .replaceAll('{{COLS}}', '8')
-        .replaceAll('{{CELL}}', '48')
-        .replaceAll('{{FIRE_RATE}}', '15')
-        .replaceAll('{{OBSTACLE_INTERVAL}}', '90'));
+    buf.writeln(
+      template.codeSkeleton
+          .replaceAll(
+            '{{GRAVITY}}',
+            template.defaultPhysics['gravity']?.toString() ?? '0.5',
+          )
+          .replaceAll(
+            '{{FRICTION}}',
+            template.defaultPhysics['friction']?.toString() ?? '0.8',
+          )
+          .replaceAll(
+            '{{JUMP_FORCE}}',
+            template.defaultPhysics['jumpForce']?.toString() ?? '12',
+          )
+          .replaceAll(
+            '{{MOVE_SPEED}}',
+            template.defaultPhysics['moveSpeed']?.toString() ?? '4',
+          )
+          .replaceAll('{{SCROLL_SPEED}}', '4')
+          .replaceAll('{{SPEED_INCREMENT}}', '0.002')
+          .replaceAll('{{ROWS}}', '8')
+          .replaceAll('{{COLS}}', '8')
+          .replaceAll('{{CELL}}', '48')
+          .replaceAll('{{FIRE_RATE}}', '15')
+          .replaceAll('{{OBSTACLE_INTERVAL}}', '90'),
+    );
     buf.writeln('```');
 
     // Add physics geometry limits for platformer-like genres
@@ -325,52 +390,61 @@ class GameGenService {
       buf.writeln('- **MAX JUMP DISTANCE = ${maxJumpD.toInt()} pixels**');
       buf.writeln();
       buf.writeln('HARD CONSTRAINT: Every consecutive platform MUST satisfy:');
-      buf.writeln('  - Vertical gap (current.y - next.y) ≤ ${maxJumpH.toInt()}px');
-      buf.writeln('  - Horizontal gap (next.x - current.right) ≤ ${maxJumpD.toInt()}px');
+      buf.writeln(
+        '  - Vertical gap (current.y - next.y) ≤ ${maxJumpH.toInt()}px',
+      );
+      buf.writeln(
+        '  - Horizontal gap (next.x - current.right) ≤ ${maxJumpD.toInt()}px',
+      );
       buf.writeln('Violating these makes the game LITERALLY UNPLAYABLE.');
-      buf.writeln('Mentally verify EVERY platform pair before outputting code.');
+      buf.writeln(
+        'Mentally verify EVERY platform pair before outputting code.',
+      );
     }
 
     buf.writeln();
     buf.writeln('## Requirements');
+    buf.writeln('1. Complete, playable game — immediately works in a browser');
     buf.writeln(
-        '1. Complete, playable game — immediately works in a browser');
+      '2. Responsive canvas: canvas.width = Math.min(innerWidth-16,420); canvas.height = Math.min(innerHeight-16,640);',
+    );
     buf.writeln(
-        '2. Responsive canvas: canvas.width = Math.min(innerWidth-16,420); canvas.height = Math.min(innerHeight-16,640);');
-    buf.writeln('3. Touch controls for mobile + Keyboard controls (Arrow keys + Space)');
+      '3. Touch controls for mobile + Keyboard controls (Arrow keys + Space)',
+    );
     buf.writeln('4. 60fps game loop with requestAnimationFrame');
+    buf.writeln('5. All game states: title, playing, gameOver, win');
     buf.writeln(
-        '5. All game states: title, playing, gameOver, win');
-    buf.writeln('6. Web Audio API oscillator-based sound effects (no external files)');
+      '6. Web Audio API oscillator-based sound effects (no external files)',
+    );
     buf.writeln(
-        '7. Fill in ALL placeholder comments with real drawing/update logic');
-    buf.writeln(
-        '8. NO external dependencies, CDN links, or library imports');
+      '7. Fill in ALL placeholder comments with real drawing/update logic',
+    );
+    buf.writeln('8. NO external dependencies, CDN links, or library imports');
     buf.writeln('9. Use descriptive variable names');
-    buf.writeln(
-        '10. RESPOND ONLY with HTML code wrapped in ```html');
+    buf.writeln('10. RESPOND ONLY with HTML code wrapped in ```html');
 
     buf.writeln();
     buf.writeln('## Genre Constraints');
     for (final c in template.getCodeGenConstraints(
-        GameDesignDocument(
-      title: spec.genre ?? 'Game',
-      genre: template.genreName,
-      coreLoop: spec.coreMechanic ?? '',
-      objects: [],
-      physics: PhysicsParams(
-        gravity: template.defaultPhysics['gravity'] ?? 0.5,
-        friction: template.defaultPhysics['friction'] ?? 0.8,
-        jumpForce: template.defaultPhysics['jumpForce'] ?? 12,
-        moveSpeed: template.defaultPhysics['moveSpeed'] ?? 4,
+      GameDesignDocument(
+        title: spec.genre ?? 'Game',
+        genre: template.genreName,
+        coreLoop: spec.coreMechanic ?? '',
+        objects: [],
+        physics: PhysicsParams(
+          gravity: template.defaultPhysics['gravity'] ?? 0.5,
+          friction: template.defaultPhysics['friction'] ?? 0.8,
+          jumpForce: template.defaultPhysics['jumpForce'] ?? 12,
+          moveSpeed: template.defaultPhysics['moveSpeed'] ?? 4,
+        ),
+        collision: const CollisionRules(),
+        scoring: const ScoringSystem(),
+        states: const StateMachine(),
+        levels: [],
+        visual: const VisualStyle(),
+        audioHints: spec.musicVibe ?? '',
       ),
-      collision: const CollisionRules(),
-      scoring: const ScoringSystem(),
-      states: const StateMachine(),
-      levels: [],
-      visual: const VisualStyle(),
-      audioHints: spec.musicVibe ?? '',
-    ))) {
+    )) {
       buf.writeln('- $c');
     }
 
@@ -401,8 +475,10 @@ class GameGenService {
     final moveSpeed = physics.moveSpeed;
 
     final buf = StringBuffer();
-    buf.writeln('You are a senior HTML5 game developer. '
-        'Generate a complete, self-contained HTML file for a ${doc.genre} game.');
+    buf.writeln(
+      'You are a senior HTML5 game developer. '
+      'Generate a complete, self-contained HTML file for a ${doc.genre} game.',
+    );
 
     buf.writeln('\n## Game Design Document');
     buf.writeln('- Title: ${doc.title}');
@@ -411,9 +487,11 @@ class GameGenService {
 
     buf.writeln('\n### Objects');
     for (final obj in doc.objects) {
-      buf.writeln('- ${obj.type}: ${obj.name} '
-          '(${obj.behaviors.join(', ')}) '
-          '[${obj.properties.entries.map((e) => '${e.key}=${e.value}').join(', ')}]');
+      buf.writeln(
+        '- ${obj.type}: ${obj.name} '
+        '(${obj.behaviors.join(', ')}) '
+        '[${obj.properties.entries.map((e) => '${e.key}=${e.value}').join(', ')}]',
+      );
     }
 
     buf.writeln('\n### Physics');
@@ -423,8 +501,12 @@ class GameGenService {
       final maxJumpH = (jumpForce * jumpForce) / (2 * gravity);
       final airTime = 2 * jumpForce / gravity;
       final maxJumpD = moveSpeed * airTime;
-      buf.writeln('- **MAX JUMP HEIGHT: ${maxJumpH.toInt()}px | MAX JUMP DISTANCE: ${maxJumpD.toInt()}px**');
-      buf.writeln('- **HARD LIMIT: every platform vertical gap ≤ ${maxJumpH.toInt()}px, horizontal gap ≤ ${maxJumpD.toInt()}px**');
+      buf.writeln(
+        '- **MAX JUMP HEIGHT: ${maxJumpH.toInt()}px | MAX JUMP DISTANCE: ${maxJumpD.toInt()}px**',
+      );
+      buf.writeln(
+        '- **HARD LIMIT: every platform vertical gap ≤ ${maxJumpH.toInt()}px, horizontal gap ≤ ${maxJumpD.toInt()}px**',
+      );
     }
 
     buf.writeln('\n### Collision Rules');
@@ -439,11 +521,13 @@ class GameGenService {
     buf.writeln('\n### Levels');
     for (int i = 0; i < doc.levels.length; i++) {
       final lvl = doc.levels[i];
-      buf.writeln('- Level ${i + 1}: '
-          '${lvl.platforms.length} platforms, '
-          '${lvl.enemies.length} enemies, '
-          '${lvl.collectibles.length} collectibles, '
-          'spawn at (${lvl.spawnPoint['x']}, ${lvl.spawnPoint['y']})');
+      buf.writeln(
+        '- Level ${i + 1}: '
+        '${lvl.platforms.length} platforms, '
+        '${lvl.enemies.length} enemies, '
+        '${lvl.collectibles.length} collectibles, '
+        'spawn at (${lvl.spawnPoint['x']}, ${lvl.spawnPoint['y']})',
+      );
     }
 
     buf.writeln('\n### Visual Style');
@@ -457,33 +541,53 @@ class GameGenService {
 
     buf.writeln('\n## Code Structure (follow this skeleton)');
     buf.writeln('```html');
-    buf.writeln(template.codeSkeleton
-        .replaceAll('{{GRAVITY}}', gravity.toString())
-        .replaceAll('{{FRICTION}}', physics.friction.toString())
-        .replaceAll('{{JUMP_FORCE}}', jumpForce.toString())
-        .replaceAll('{{MOVE_SPEED}}', moveSpeed.toString())
-        .replaceAll('{{SCROLL_SPEED}}',
-            physicsParams['scrollSpeed']?.toString() ?? '4')
-        .replaceAll('{{SPEED_INCREMENT}}',
-            physicsParams['speedIncrement']?.toString() ?? '0.002')
-        .replaceAll('{{ROWS}}', '8')
-        .replaceAll('{{COLS}}', '8')
-        .replaceAll('{{CELL}}', '48')
-        .replaceAll('{{FIRE_RATE}}', '15')
-        .replaceAll('{{OBSTACLE_INTERVAL}}', '90'));
+    buf.writeln(
+      template.codeSkeleton
+          .replaceAll('{{GRAVITY}}', gravity.toString())
+          .replaceAll('{{FRICTION}}', physics.friction.toString())
+          .replaceAll('{{JUMP_FORCE}}', jumpForce.toString())
+          .replaceAll('{{MOVE_SPEED}}', moveSpeed.toString())
+          .replaceAll(
+            '{{SCROLL_SPEED}}',
+            physicsParams['scrollSpeed']?.toString() ?? '4',
+          )
+          .replaceAll(
+            '{{SPEED_INCREMENT}}',
+            physicsParams['speedIncrement']?.toString() ?? '0.002',
+          )
+          .replaceAll('{{ROWS}}', '8')
+          .replaceAll('{{COLS}}', '8')
+          .replaceAll('{{CELL}}', '48')
+          .replaceAll('{{FIRE_RATE}}', '15')
+          .replaceAll('{{OBSTACLE_INTERVAL}}', '90'),
+    );
     buf.writeln('```');
 
     buf.writeln('\n## Requirements');
-    buf.writeln('1. **Complete, playable game** — immediately works in a browser');
-    buf.writeln('2. **Responsive canvas**: '
-        '`canvas.width = Math.min(innerWidth - 16, 420); canvas.height = Math.min(innerHeight - 16, 640);`');
+    buf.writeln(
+      '1. **Complete, playable game** — immediately works in a browser',
+    );
+    buf.writeln(
+      '2. **Responsive canvas**: '
+      '`canvas.width = Math.min(innerWidth - 16, 420); canvas.height = Math.min(innerHeight - 16, 640);`',
+    );
     buf.writeln('3. **Touch controls** must work on mobile devices');
-    buf.writeln('4. **Keyboard controls**: Arrow keys + Space for primary actions');
+    buf.writeln(
+      '4. **Keyboard controls**: Arrow keys + Space for primary actions',
+    );
     buf.writeln('5. **60fps game loop** with requestAnimationFrame');
-    buf.writeln('6. **All game states** implemented: ${doc.states.states.join(', ')}');
-    buf.writeln('7. **Restart**: tap or keypress when game over/win resets everything');
-    buf.writeln('8. **Web Audio API** sound effects (oscillator-based, no external files)');
-    buf.writeln('9. Fill in ALL placeholder comments in the skeleton with real drawing/update logic');
+    buf.writeln(
+      '6. **All game states** implemented: ${doc.states.states.join(', ')}',
+    );
+    buf.writeln(
+      '7. **Restart**: tap or keypress when game over/win resets everything',
+    );
+    buf.writeln(
+      '8. **Web Audio API** sound effects (oscillator-based, no external files)',
+    );
+    buf.writeln(
+      '9. Fill in ALL placeholder comments in the skeleton with real drawing/update logic',
+    );
 
     buf.writeln('\n## Genre-Specific Constraints');
     for (final c in template.getCodeGenConstraints(doc)) {
@@ -495,9 +599,13 @@ class GameGenService {
     buf.writeln('- Use readable, descriptive variable names');
     buf.writeln('- RESPOND ONLY with the HTML code wrapped in ```html');
     buf.writeln('- Make the game fun and playable — test your logic mentally');
-    buf.writeln('- The skeleton is a GUIDE — flesh it out with complete implementations');
-    buf.writeln('- Replace LEVELS_DATA_PLACEHOLDER, WAVES_DATA_PLACEHOLDER, '
-        'PUZZLE_DATA_PLACEHOLDER with real level data from the design document');
+    buf.writeln(
+      '- The skeleton is a GUIDE — flesh it out with complete implementations',
+    );
+    buf.writeln(
+      '- Replace LEVELS_DATA_PLACEHOLDER, WAVES_DATA_PLACEHOLDER, '
+      'PUZZLE_DATA_PLACEHOLDER with real level data from the design document',
+    );
 
     if (feedback != null && feedback.isNotEmpty) {
       buf.writeln('\n## CRITICAL: Previous Issues to Fix');
@@ -590,7 +698,10 @@ class GameGenService {
   // ─── Validation ────────────────────────────────────────────────────
 
   CodeValidation _validateCode(
-      String html, GameSpec spec, GameTemplate template) {
+    String html,
+    GameSpec spec,
+    GameTemplate template,
+  ) {
     final issues = <String>[];
 
     // Structural checks
@@ -633,12 +744,15 @@ class GameGenService {
     // Template-specific checks
     for (final element in template.requiredCodeElements) {
       if (!html.contains(element)) {
-        issues.add('Missing required element for ${template.genreName}: $element');
+        issues.add(
+          'Missing required element for ${template.genreName}: $element',
+        );
       }
     }
 
     // Web Audio check (soft requirement — warn but don't fail)
-    if (!html.contains('AudioContext') && !html.contains('webkitAudioContext')) {
+    if (!html.contains('AudioContext') &&
+        !html.contains('webkitAudioContext')) {
       issues.add('Missing Web Audio API — add oscillator-based sound effects');
     }
 

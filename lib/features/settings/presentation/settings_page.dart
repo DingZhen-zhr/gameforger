@@ -207,6 +207,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           '通过对话式引导，帮助你从故事、美术到玩法，'
           '将创意转化为可运行的 HTML5 小游戏。',
         ),
+        const SizedBox(height: 12),
+        Text(
+          'AI 能力边界：当前版本主要支持单文件 2D HTML5 Canvas 游戏生成与修改；'
+          '不支持 3D 引擎、多人联网、后端服务、真实支付、云存档或外部服务器逻辑。',
+        ),
+        const SizedBox(height: 8),
+        Text('AI 生成内容可能存在逻辑错误或与需求不一致，请通过预览试玩、代码检查和人工审核确认结果。'),
       ],
     );
   }
