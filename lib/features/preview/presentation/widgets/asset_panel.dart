@@ -161,11 +161,7 @@ class _AssetPanelState extends State<AssetPanel>
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.edit,
-                      size: 12,
-                      color: Colors.white70,
-                    ),
+                    child: Icon(Icons.edit, size: 12, color: Colors.white70),
                   ),
                 ),
               );
@@ -195,7 +191,7 @@ class _AssetPanelState extends State<AssetPanel>
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
+            Text(
               '编辑颜色',
               style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
             ),
@@ -206,15 +202,15 @@ class _AssetPanelState extends State<AssetPanel>
           children: [
             TextField(
               controller: hexController,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.textPrimary,
                 fontFamily: 'monospace',
               ),
               decoration: InputDecoration(
                 prefixText: '#',
-                prefixStyle: const TextStyle(color: AppTheme.textSecondary),
+                prefixStyle: TextStyle(color: AppTheme.textSecondary),
                 hintText: '输入十六进制颜色值',
-                hintStyle: const TextStyle(color: AppTheme.textTertiary),
+                hintStyle: TextStyle(color: AppTheme.textTertiary),
                 filled: true,
                 fillColor: AppTheme.surfaceVariant,
                 border: OutlineInputBorder(
@@ -226,20 +222,14 @@ class _AssetPanelState extends State<AssetPanel>
             const SizedBox(height: 12),
             Text(
               '替换所有 "$colorInfo.label" 为新的颜色值',
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 11,
-              ),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              '取消',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
+            child: Text('取消', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           FilledButton(
             onPressed: () {
@@ -250,7 +240,7 @@ class _AssetPanelState extends State<AssetPanel>
               }
             },
             style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: const Text('替换全部'),
+            child: Text('替换全部'),
           ),
         ],
       ),
@@ -309,11 +299,7 @@ class _AssetPanelState extends State<AssetPanel>
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(
-                        Icons.edit,
-                        size: 10,
-                        color: AppTheme.textSecondary,
-                      ),
+                      Icon(Icons.edit, size: 10, color: AppTheme.textSecondary),
                     ],
                   ),
                 ),
@@ -339,7 +325,7 @@ class _AssetPanelState extends State<AssetPanel>
           children: [
             Icon(objectInfo.icon, size: 20, color: AppTheme.primary),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               '编辑对象名称',
               style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
             ),
@@ -351,10 +337,10 @@ class _AssetPanelState extends State<AssetPanel>
             TextField(
               controller: controller,
               autofocus: true,
-              style: const TextStyle(color: AppTheme.textPrimary),
+              style: TextStyle(color: AppTheme.textPrimary),
               decoration: InputDecoration(
                 hintText: '输入新的对象名称',
-                hintStyle: const TextStyle(color: AppTheme.textTertiary),
+                hintStyle: TextStyle(color: AppTheme.textTertiary),
                 filled: true,
                 fillColor: AppTheme.surfaceVariant,
                 border: OutlineInputBorder(
@@ -366,20 +352,14 @@ class _AssetPanelState extends State<AssetPanel>
             const SizedBox(height: 8),
             Text(
               '注意：重命名可能影响游戏逻辑，请确认代码中的变量名一致',
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 11,
-              ),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              '取消',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
+            child: Text('取消', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           FilledButton(
             onPressed: () {
@@ -390,7 +370,7 @@ class _AssetPanelState extends State<AssetPanel>
               }
             },
             style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: const Text('重命名'),
+            child: Text('重命名'),
           ),
         ],
       ),
@@ -439,7 +419,7 @@ class _AssetPanelState extends State<AssetPanel>
                     Expanded(
                       child: Text(
                         u.url,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 10,
                           color: AppTheme.textSecondary,
@@ -448,11 +428,7 @@ class _AssetPanelState extends State<AssetPanel>
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(
-                      Icons.edit,
-                      size: 12,
-                      color: AppTheme.textSecondary,
-                    ),
+                    Icon(Icons.edit, size: 12, color: AppTheme.textSecondary),
                   ],
                 ),
               ),
@@ -477,7 +453,7 @@ class _AssetPanelState extends State<AssetPanel>
               size: 18,
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               '编辑资源 URL',
               style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
             ),
@@ -485,7 +461,7 @@ class _AssetPanelState extends State<AssetPanel>
         ),
         content: TextField(
           controller: controller,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppTheme.textPrimary,
             fontFamily: 'monospace',
             fontSize: 12,
@@ -493,7 +469,7 @@ class _AssetPanelState extends State<AssetPanel>
           maxLines: 3,
           decoration: InputDecoration(
             hintText: '输入新的资源 URL',
-            hintStyle: const TextStyle(color: AppTheme.textTertiary),
+            hintStyle: TextStyle(color: AppTheme.textTertiary),
             filled: true,
             fillColor: AppTheme.surfaceVariant,
             border: OutlineInputBorder(
@@ -505,10 +481,7 @@ class _AssetPanelState extends State<AssetPanel>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              '取消',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
+            child: Text('取消', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           FilledButton(
             onPressed: () {
@@ -520,7 +493,7 @@ class _AssetPanelState extends State<AssetPanel>
               }
             },
             style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: const Text('替换'),
+            child: Text('替换'),
           ),
         ],
       ),
@@ -542,9 +515,9 @@ class _AssetPanelState extends State<AssetPanel>
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome, size: 16, color: AppTheme.primary),
+              Icon(Icons.auto_awesome, size: 16, color: AppTheme.primary),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'AI 素材生成',
                 style: TextStyle(
                   color: AppTheme.textPrimary,
@@ -554,7 +527,7 @@ class _AssetPanelState extends State<AssetPanel>
               ),
               const Spacer(),
               if (_isGenerating)
-                const SizedBox(
+                SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(
@@ -570,7 +543,7 @@ class _AssetPanelState extends State<AssetPanel>
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
                 _generationError!,
-                style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                style: TextStyle(color: Colors.redAccent, fontSize: 11),
               ),
             ),
           LayoutBuilder(
@@ -578,15 +551,12 @@ class _AssetPanelState extends State<AssetPanel>
               final compact = constraints.maxWidth < 320;
               final input = TextField(
                 controller: _imagePromptController,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: AppTheme.textPrimary, fontSize: 12),
                 minLines: 1,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: '描述你要生成的图片素材...',
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     color: AppTheme.textTertiary,
                     fontSize: 12,
                   ),
@@ -609,8 +579,8 @@ class _AssetPanelState extends State<AssetPanel>
                 width: compact ? double.infinity : null,
                 child: FilledButton.icon(
                   onPressed: _isGenerating ? null : _startImageGeneration,
-                  icon: const Icon(Icons.image, size: 16),
-                  label: const Text('生成', style: TextStyle(fontSize: 12)),
+                  icon: Icon(Icons.image, size: 16),
+                  label: Text('生成', style: TextStyle(fontSize: 12)),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -647,7 +617,7 @@ class _AssetPanelState extends State<AssetPanel>
               final compact = constraints.maxWidth < 340;
               final copy = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'AI 配乐生成',
                     style: TextStyle(
@@ -676,8 +646,8 @@ class _AssetPanelState extends State<AssetPanel>
                       : () {
                           _showMusicGenerateDialog(context);
                         },
-                  icon: const Icon(Icons.music_note, size: 16),
-                  label: const Text('生成配乐', style: TextStyle(fontSize: 12)),
+                  icon: Icon(Icons.music_note, size: 16),
+                  label: Text('生成配乐', style: TextStyle(fontSize: 12)),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.secondary,
                     foregroundColor: Colors.black,
@@ -910,7 +880,7 @@ class _AssetPanelState extends State<AssetPanel>
                     errorBuilder: (ctx, err, stack) => Container(
                       height: 100,
                       color: AppTheme.surfaceVariant,
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.broken_image,
                           color: AppTheme.textSecondary,
@@ -981,7 +951,7 @@ class _AssetPanelState extends State<AssetPanel>
                     color: AppTheme.secondary.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.graphic_eq,
                     color: AppTheme.secondary,
                     size: 20,
@@ -992,7 +962,7 @@ class _AssetPanelState extends State<AssetPanel>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         '游戏 BGM 已生成',
                         style: TextStyle(
                           color: AppTheme.textPrimary,
@@ -1003,7 +973,7 @@ class _AssetPanelState extends State<AssetPanel>
                       const SizedBox(height: 4),
                       SelectableText(
                         url,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppTheme.textTertiary,
                           fontSize: 10,
                           fontFamily: 'monospace',
@@ -1055,7 +1025,7 @@ aiGeneratedImage.src = $imageUrl;
     _applyUpdatedCode(updated);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('图片已嵌入游戏代码，可通过 aiGeneratedImage 引用'),
         backgroundColor: AppTheme.primary,
         duration: Duration(seconds: 3),
@@ -1138,7 +1108,7 @@ aiGeneratedImage.src = $imageUrl;
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceVariant,
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.transform, color: AppTheme.primary, size: 20),
             SizedBox(width: 8),
@@ -1168,11 +1138,11 @@ aiGeneratedImage.src = $imageUrl;
                       ),
                       title: Text(
                         object.name,
-                        style: const TextStyle(color: AppTheme.textPrimary),
+                        style: TextStyle(color: AppTheme.textPrimary),
                       ),
                       subtitle: Text(
                         '用当前生成图片覆盖 ${object.name} 的绘制',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppTheme.textTertiary,
                           fontSize: 11,
                         ),
@@ -1187,10 +1157,7 @@ aiGeneratedImage.src = $imageUrl;
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              '取消',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
+            child: Text('取消', style: TextStyle(color: AppTheme.textSecondary)),
           ),
         ],
       ),
@@ -1548,7 +1515,7 @@ function $functionName($params) {
     _applyUpdatedCode(updated);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('配乐已嵌入游戏代码，首次点击或按键后自动播放'),
         backgroundColor: AppTheme.secondary,
         duration: Duration(seconds: 3),
@@ -1638,10 +1605,7 @@ function $functionName($params) {
               const SizedBox(width: 4),
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
               ),
             ],
           ),
@@ -1658,7 +1622,7 @@ function $functionName($params) {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppTheme.textSecondary,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -1837,7 +1801,7 @@ class _MusicGenerationDialogState extends State<_MusicGenerationDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppTheme.surfaceVariant,
-      title: const Row(
+      title: Row(
         children: [
           Icon(Icons.music_note, color: AppTheme.secondary, size: 20),
           SizedBox(width: 8),
@@ -1858,7 +1822,7 @@ class _MusicGenerationDialogState extends State<_MusicGenerationDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 '描述游戏场景、节奏、情绪和乐器。默认使用 MiniMax 生成可嵌入游戏的音频 URL。',
                 style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
               ),
@@ -1867,13 +1831,10 @@ class _MusicGenerationDialogState extends State<_MusicGenerationDialog> {
                 controller: _promptController,
                 autofocus: true,
                 maxLines: 4,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: AppTheme.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: '例如：冷静的科幻 Roguelike 主菜单 BGM，低频脉冲，玻璃合成器，中速循环',
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     color: AppTheme.textTertiary,
                     fontSize: 12,
                   ),
@@ -1891,11 +1852,11 @@ class _MusicGenerationDialogState extends State<_MusicGenerationDialog> {
                 onChanged: (value) => setState(() => _instrumental = value),
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                title: const Text(
+                title: Text(
                   '纯音乐',
                   style: TextStyle(color: AppTheme.textPrimary, fontSize: 13),
                 ),
-                subtitle: const Text(
+                subtitle: Text(
                   '游戏 BGM 推荐开启；关闭后可输入歌词',
                   style: TextStyle(color: AppTheme.textTertiary, fontSize: 11),
                 ),
@@ -1905,13 +1866,10 @@ class _MusicGenerationDialogState extends State<_MusicGenerationDialog> {
                 TextField(
                   controller: _lyricsController,
                   maxLines: 6,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: AppTheme.textPrimary, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: '[Verse]\\n星尘落在黑色引擎\\n[Chorus]\\n我们穿过新的轨迹',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       color: AppTheme.textTertiary,
                       fontSize: 12,
                     ),
@@ -1931,10 +1889,7 @@ class _MusicGenerationDialogState extends State<_MusicGenerationDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
-            '取消',
-            style: TextStyle(color: AppTheme.textSecondary),
-          ),
+          child: Text('取消', style: TextStyle(color: AppTheme.textSecondary)),
         ),
         FilledButton(
           onPressed: () {
@@ -1952,7 +1907,7 @@ class _MusicGenerationDialogState extends State<_MusicGenerationDialog> {
             backgroundColor: AppTheme.secondary,
             foregroundColor: Colors.black,
           ),
-          child: const Text('开始生成'),
+          child: Text('开始生成'),
         ),
       ],
     );

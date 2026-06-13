@@ -33,7 +33,7 @@ class DiffReviewPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(left: 4, top: 4, bottom: 8, right: 4),
           child: Row(
             children: [
@@ -120,10 +120,7 @@ class DiffReviewPanel extends StatelessWidget {
                     : anyApplied
                     ? '已完成，继续对话'
                     : '应用已接受的修改 (${edits.where((e) => e.isAccepted && !e.isApplied).length})',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -219,7 +216,7 @@ class _EditCard extends StatelessWidget {
                 if (edit.applyError != null) ...[
                   Icon(Icons.error_outline, size: 14, color: AppTheme.error),
                   const SizedBox(width: 4),
-                  const Text(
+                  Text(
                     '匹配失败',
                     style: TextStyle(fontSize: 11, color: AppTheme.error),
                   ),
@@ -234,7 +231,7 @@ class _EditCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
               child: Text(
                 edit.applyError!,
-                style: const TextStyle(fontSize: 11, color: AppTheme.error),
+                style: TextStyle(fontSize: 11, color: AppTheme.error),
               ),
             ),
 
@@ -248,7 +245,7 @@ class _EditCard extends StatelessWidget {
           ),
 
           // Arrow between old and new
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Icon(
               Icons.arrow_downward,
@@ -301,11 +298,11 @@ class _EditCard extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () => _showManualFixDialog(context),
-                  icon: const Icon(Icons.edit, size: 16),
-                  label: const Text('手动修正', style: TextStyle(fontSize: 12)),
+                  icon: Icon(Icons.edit, size: 16),
+                  label: Text('手动修正', style: TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.primary,
-                    side: const BorderSide(color: AppTheme.primary),
+                    side: BorderSide(color: AppTheme.primary),
                     minimumSize: const Size(double.infinity, 36),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -327,7 +324,7 @@ class _EditCard extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceDark,
-        title: const Text(
+        title: Text(
           '手动修正代码匹配',
           style: TextStyle(fontSize: 16, color: AppTheme.textPrimary),
         ),
@@ -336,12 +333,12 @@ class _EditCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 '请修正旧代码以精确匹配游戏代码中的内容：',
                 style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 '旧代码（匹配目标）：',
                 style: TextStyle(fontSize: 12, color: AppTheme.error),
               ),
@@ -349,7 +346,7 @@ class _EditCard extends StatelessWidget {
               TextField(
                 controller: oldController,
                 maxLines: 4,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'monospace',
                   color: AppTheme.textPrimary,
@@ -364,7 +361,7 @@ class _EditCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 '新代码（替换为）：',
                 style: TextStyle(fontSize: 12, color: Colors.green),
               ),
@@ -372,7 +369,7 @@ class _EditCard extends StatelessWidget {
               TextField(
                 controller: newController,
                 maxLines: 4,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'monospace',
                   color: AppTheme.textPrimary,
@@ -392,10 +389,7 @@ class _EditCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              '取消',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
+            child: Text('取消', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           TextButton(
             onPressed: () {
@@ -406,10 +400,7 @@ class _EditCard extends StatelessWidget {
                 newController.text,
               );
             },
-            child: const Text(
-              '应用修正',
-              style: TextStyle(color: AppTheme.primary),
-            ),
+            child: Text('应用修正', style: TextStyle(color: AppTheme.primary)),
           ),
         ],
       ),
@@ -460,7 +451,7 @@ class _CodeBlock extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: Text(
                 code,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontFamily: 'monospace',
                   color: AppTheme.textPrimary,

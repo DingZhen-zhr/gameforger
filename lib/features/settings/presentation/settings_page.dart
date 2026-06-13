@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/cosmic_forge.dart';
 import '../../../services/supabase/supabase_client.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -47,21 +48,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('修改用户名'),
+        title: Text('修改用户名'),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(hintText: '输入新用户名'),
+          decoration: InputDecoration(hintText: '输入新用户名'),
           textCapitalization: TextCapitalization.words,
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('取消')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('保存'),
+            child: Text('保存'),
           ),
         ],
       ),
@@ -87,13 +85,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final themeMode = ref.watch(themeControllerProvider);
     final email = authState.user?.email ?? '未知';
     final displayName = _username.isNotEmpty ? _username : email;
 
     return SafeArea(
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 118),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 110),
         children: [
           _SettingsNav(onMore: _showSettingsMenu),
           const SizedBox(height: 16),
@@ -105,7 +104,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onEdit: _editUsername,
           ),
           const SizedBox(height: 22),
-          const ForgeSectionLabel(title: '常用'),
+          const ForgeSectionLabel(title: 'Configuration'),
           _SettingsGroup(
             children: [
               _ActionGlassTile(
@@ -116,17 +115,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 onTap: () => context.push('/settings/api'),
               ),
               _ActionGlassTile(
+                icon: themeMode.isLight
+                    ? Icons.light_mode_rounded
+                    : Icons.dark_mode_rounded,
+                accent: AppTheme.primary,
+                title: '外观',
+                subtitle: themeMode.label,
+                badge: ForgeChip(
+                  label: themeMode.isLight ? 'Light' : 'Dark',
+                  tone: ForgeChipTone.online,
+                ),
+                onTap: () =>
+                    ref.read(themeControllerProvider.notifier).toggle(),
+              ),
+              _ActionGlassTile(
                 icon: Icons.monetization_on_rounded,
                 accent: AppTheme.gold,
                 title: '点数中心',
                 subtitle: '查看余额、购买点数',
-                badge: const ForgeChip(label: '点数', tone: ForgeChipTone.gold),
+                badge: ForgeChip(label: '点数', tone: ForgeChipTone.gold),
                 onTap: () => context.push('/settings/credits'),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          const ForgeSectionLabel(title: '系统'),
+          const ForgeSectionLabel(title: 'System'),
           _SettingsGroup(
             children: [
               _ActionGlassTile(
@@ -147,8 +160,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ],
           ),
           const SizedBox(height: 26),
-          const Text(
-            'GameForger 1.4',
+          Text(
+            'GAMEFORGER · WORKSHOP 1.4',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppTheme.textTertiary,
@@ -165,20 +178,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('退出登录'),
-        content: const Text('确定要退出登录吗？'),
+        title: Text('退出登录'),
+        content: Text('确定要退出登录吗？'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('取消')),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(authProvider.notifier).signOut();
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('退出'),
+            child: Text('退出'),
           ),
         ],
       ),
@@ -192,7 +202,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       applicationVersion: '1.0.0',
       applicationLegalese: 'GameForger AI - 让你的游戏创意变成现实',
       children: [
-        const Text(
+        Text(
           'GameForger 是一款基于 AI 的游戏生成助手。'
           '通过对话式引导，帮助你从故事、美术到玩法，'
           '将创意转化为可运行的 HTML5 小游戏。',
@@ -203,6 +213,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   void _showSettingsMenu() {
     final authState = ref.read(authProvider);
+    final themeMode = ref.read(themeControllerProvider);
     final email = authState.user?.email ?? '未知';
     final displayName = _username.isNotEmpty ? _username : email;
 
@@ -229,7 +240,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         color: AppTheme.primary.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.person_rounded,
                         color: AppTheme.primary,
                       ),
@@ -250,7 +261,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             email,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppTheme.textSecondary,
                               fontSize: 12,
                             ),
@@ -262,20 +273,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.edit_rounded),
-                title: const Text('修改用户名'),
+                leading: Icon(Icons.edit_rounded),
+                title: Text('修改用户名'),
                 onTap: () {
                   Navigator.pop(ctx);
                   _editUsername();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.sync_rounded),
-                title: const Text('刷新账号信息'),
+                leading: Icon(Icons.sync_rounded),
+                title: Text('刷新账号信息'),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() => _loadingProfile = true);
                   _loadProfile();
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  themeMode.isLight
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                ),
+                title: Text(themeMode.nextLabel),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  ref.read(themeControllerProvider.notifier).toggle();
                 },
               ),
             ],
@@ -293,36 +316,34 @@ class _SettingsNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '控制',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  height: 1.05,
-                ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                '账号与设置',
-                style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
-              ),
-            ],
+        Row(
+          children: [
+            ForgeAppMark(size: 24),
+            const Spacer(),
+            ForgeIconButton(
+              icon: Icons.more_horiz_rounded,
+              onTap: onMore,
+              tooltip: '更多',
+              size: 36,
+              iconSize: 16,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'WORKSHOP // PROFILE',
+          style: TextStyle(
+            color: AppTheme.textTertiary,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.4,
           ),
         ),
-        const SizedBox(width: 12),
-        ForgeIconButton(
-          icon: Icons.more_horiz_rounded,
-          onTap: onMore,
-          tooltip: '更多',
-        ),
+        const SizedBox(height: 4),
+        Text('Profile.', style: Theme.of(context).textTheme.headlineLarge),
       ],
     );
   }
@@ -348,11 +369,7 @@ class _SettingsHero extends StatelessWidget {
     final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
 
     return ForgeGlassCard(
-      borderRadius: BorderRadius.circular(24),
-      accent: AppTheme.primary,
-      accentOpacity: 0.08,
-      borderOpacity: 0.12,
-      glow: true,
+      borderRadius: BorderRadius.circular(12),
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,36 +378,23 @@ class _SettingsHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 60,
-                height: 60,
+                width: 54,
+                height: 54,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: const RadialGradient(
-                    center: Alignment(-0.35, -0.35),
-                    colors: [
-                      AppTheme.cyan,
-                      AppTheme.primary,
-                      AppTheme.primaryContainer,
-                    ],
-                  ),
+                  shape: BoxShape.circle,
+                  color: AppTheme.primary.withValues(alpha: 0.14),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    width: 0.8,
+                    color: AppTheme.textPrimary.withValues(alpha: 0.2),
+                    width: 0.7,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withValues(alpha: 0.36),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
                 ),
                 child: Text(
-                  initial,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
+                  initial.toLowerCase(),
+                  style: TextStyle(
+                    color: AppTheme.primary,
+                    fontSize: 28,
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -422,9 +426,11 @@ class _SettingsHero extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       email,
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12,
+                      style: TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ],
@@ -432,36 +438,24 @@ class _SettingsHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+          Divider(
+            color: AppTheme.textPrimary.withValues(alpha: 0.12),
+            height: 1,
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
-              ForgeChip(
-                label: loading ? '同步中' : '已登录',
-                icon: loading ? Icons.sync_rounded : Icons.verified_rounded,
-                tone: ForgeChipTone.online,
-                dot: !loading,
-              ),
-              const SizedBox(width: 10),
-              ForgeChip(
-                label: username.isEmpty ? '未设置用户名' : '用户名已设置',
-                icon: Icons.badge_rounded,
-                tone: username.isEmpty
-                    ? ForgeChipTone.draft
-                    : ForgeChipTone.gold,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
-          const SizedBox(height: 14),
-          const Row(
-            children: [
               Expanded(
-                child: _ControlMetric(label: '剩余点数', value: '查看余额', gold: true),
+                child: _ControlMetric(
+                  label: 'CREDITS',
+                  value: '1,240',
+                  gold: true,
+                ),
               ),
               SizedBox(width: 12),
               Expanded(
-                child: _ControlMetric(label: '模型配置', value: '4 项'),
+                child: _ControlMetric(label: 'SHIPPED', value: '08'),
               ),
             ],
           ),
@@ -489,10 +483,11 @@ class _ControlMetric extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppTheme.textTertiary,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
+            fontSize: 9.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
           ),
         ),
         const SizedBox(height: 4),
@@ -500,8 +495,10 @@ class _ControlMetric extends StatelessWidget {
           value,
           style: TextStyle(
             color: gold ? AppTheme.gold : AppTheme.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
+            fontSize: 28,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'Georgia',
+            height: 1,
           ),
         ),
       ],
@@ -516,22 +513,21 @@ class _SettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ForgeGlassCard(
-      padding: EdgeInsets.zero,
-      borderRadius: BorderRadius.circular(18),
-      accent: AppTheme.primary,
-      accentOpacity: 0.035,
-      borderOpacity: 0.08,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.textPrimary.withValues(alpha: 0.2),
+            width: 0.6,
+          ),
+          bottom: BorderSide(
+            color: AppTheme.textPrimary.withValues(alpha: 0.2),
+            width: 0.6,
+          ),
+        ),
+      ),
       child: Column(
-        children: List.generate(children.length, (index) {
-          return Column(
-            children: [
-              children[index],
-              if (index != children.length - 1)
-                Divider(height: 1, color: Colors.white.withValues(alpha: 0.06)),
-            ],
-          );
-        }),
+        children: List.generate(children.length, (index) => children[index]),
       ),
     );
   }
@@ -561,43 +557,41 @@ class _ActionGlassTile extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: AppTheme.textPrimary.withValues(alpha: 0.08),
+              width: 0.6,
+            ),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: accent.withValues(alpha: 0.28),
-                  width: 0.8,
-                ),
-              ),
-              child: Icon(icon, color: accent, size: 17),
-            ),
-            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: TextStyle(
                       color: destructive
                           ? AppTheme.error
                           : AppTheme.textPrimary,
-                      fontSize: 15,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 13,
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
                     ),
                   ),
                 ],
@@ -606,10 +600,7 @@ class _ActionGlassTile extends StatelessWidget {
             if (badge != null) ...[const SizedBox(width: 8), badge!],
             const SizedBox(width: 8),
             if (!destructive)
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppTheme.textTertiary,
-              ),
+              Icon(Icons.chevron_right_rounded, color: AppTheme.textTertiary),
           ],
         ),
       ),

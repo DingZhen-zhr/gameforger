@@ -84,7 +84,7 @@ class WorkspacePage extends ConsumerWidget {
                       ),
                     ),
                     if (state.messages.isEmpty)
-                      const SliverFillRemaining(
+                      SliverFillRemaining(
                         hasScrollBody: false,
                         child: _EmptyState(),
                       )
@@ -139,7 +139,7 @@ class WorkspacePage extends ConsumerWidget {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 40,
                   height: 40,
                   child: CircularProgressIndicator(
@@ -148,13 +148,13 @@ class WorkspacePage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'AI 正在生成游戏...',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppTheme.textPrimary, fontSize: 14),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   '设计文档 → 代码生成\n超时限制 3 分钟',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
@@ -165,7 +165,7 @@ class WorkspacePage extends ConsumerWidget {
                     cancelled = true;
                     Navigator.of(ctx).pop();
                   },
-                  child: const Text(
+                  child: Text(
                     '取消',
                     style: TextStyle(color: AppTheme.textSecondary),
                   ),
@@ -249,7 +249,7 @@ class _WorkspaceTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 10),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
       child: Row(
         children: [
           ForgeIconButton(
@@ -263,21 +263,31 @@ class _WorkspaceTopBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
+                  'WORKSHOP // SPEC',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontStyle: FontStyle.italic),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textTertiary,
                     fontSize: 10.5,
                     letterSpacing: 0.3,
@@ -530,14 +540,11 @@ class _QuickToolbar extends ConsumerWidget {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(hintText: '输入内容...'),
+          decoration: InputDecoration(hintText: '输入内容...'),
           maxLines: 3,
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('取消')),
           FilledButton(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
@@ -548,7 +555,7 @@ class _QuickToolbar extends ConsumerWidget {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('添加'),
+            child: Text('添加'),
           ),
         ],
       ),
@@ -621,16 +628,16 @@ void _showEditDialog(
       backgroundColor: AppTheme.surfaceVariant,
       title: Text(
         '编辑 $label',
-        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+        style: TextStyle(color: AppTheme.textPrimary, fontSize: 16),
       ),
       content: TextField(
         controller: controller,
         autofocus: true,
         maxLines: 3,
-        style: const TextStyle(color: AppTheme.textPrimary),
+        style: TextStyle(color: AppTheme.textPrimary),
         decoration: InputDecoration(
           hintText: '输入新的$label...',
-          hintStyle: const TextStyle(color: AppTheme.textSecondary),
+          hintStyle: TextStyle(color: AppTheme.textSecondary),
           filled: true,
           fillColor: AppTheme.surfaceVariant,
           border: OutlineInputBorder(
@@ -642,10 +649,7 @@ void _showEditDialog(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text(
-            '取消',
-            style: TextStyle(color: AppTheme.textSecondary),
-          ),
+          child: Text('取消', style: TextStyle(color: AppTheme.textSecondary)),
         ),
         FilledButton(
           onPressed: () {
@@ -657,7 +661,7 @@ void _showEditDialog(
             }
           },
           style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-          child: const Text('保存'),
+          child: Text('保存'),
         ),
       ],
     ),
@@ -677,13 +681,9 @@ void _showRediscussConfirm(
       backgroundColor: AppTheme.surfaceVariant,
       title: Row(
         children: [
-          const Icon(
-            Icons.chat_bubble_outline,
-            color: AppTheme.primary,
-            size: 20,
-          ),
+          Icon(Icons.chat_bubble_outline, color: AppTheme.primary, size: 20),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
               '重新讨论',
               style: TextStyle(color: AppTheme.textPrimary, fontSize: 16),
@@ -693,15 +693,12 @@ void _showRediscussConfirm(
       ),
       content: Text(
         '确定要重新讨论「$label」吗？\n\nAI 将会针对这个维度重新提问，之前的设定将被清除。你可以通过对话进一步深化你的想法。',
-        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text(
-            '取消',
-            style: TextStyle(color: AppTheme.textSecondary),
-          ),
+          child: Text('取消', style: TextStyle(color: AppTheme.textSecondary)),
         ),
         FilledButton(
           onPressed: () {
@@ -711,7 +708,7 @@ void _showRediscussConfirm(
                 .rediscussDimension(dimKey, label);
           },
           style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-          child: const Text('开始重新讨论'),
+          child: Text('开始重新讨论'),
         ),
       ],
     ),
@@ -758,13 +755,13 @@ void _showSpecOverview(
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.grid_view_rounded,
                       size: 20,
                       color: AppTheme.primary,
                     ),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         '游戏创意总览',
                         style: TextStyle(
@@ -777,7 +774,7 @@ void _showSpecOverview(
                     const SizedBox(width: 8),
                     Text(
                       '${state.gameSpec.filledCount} / 9',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppTheme.primary,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -831,11 +828,11 @@ void _showSpecOverview(
                     onPressed: () {
                       Navigator.pop(ctx);
                     },
-                    icon: const Icon(Icons.close, size: 16),
-                    label: const Text('关闭'),
+                    icon: Icon(Icons.close, size: 16),
+                    label: Text('关闭'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textSecondary,
-                      side: const BorderSide(color: AppTheme.outlineDark),
+                      side: BorderSide(color: AppTheme.outlineDark),
                     ),
                   ),
                 ),
@@ -902,11 +899,8 @@ class _InputBarState extends ConsumerState<_InputBar> {
                 onSubmitted: (_) => _send(),
                 minLines: 1,
                 maxLines: 4,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 13.5,
-                ),
-                decoration: const InputDecoration(
+                style: TextStyle(color: AppTheme.textPrimary, fontSize: 13.5),
+                decoration: InputDecoration(
                   hintText: '告诉我下一步要改什么...',
                   hintStyle: TextStyle(color: AppTheme.textTertiary),
                   filled: false,

@@ -85,7 +85,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
       body: CosmicBackground(
         child: SafeArea(
           child: _loading
-              ? const Center(child: StarRingLoader(label: '正在同步点数'))
+              ? Center(child: StarRingLoader(label: '正在同步点数'))
               : _error != null
               ? Center(
                   child: SingleChildScrollView(
@@ -93,7 +93,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline,
                           size: 48,
                           color: AppTheme.error,
@@ -101,14 +101,11 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
                         const SizedBox(height: 16),
                         Text(
                           _error!,
-                          style: const TextStyle(color: AppTheme.textSecondary),
+                          style: TextStyle(color: AppTheme.textSecondary),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _load,
-                          child: const Text('重试'),
-                        ),
+                        ElevatedButton(onPressed: _load, child: Text('重试')),
                       ],
                     ),
                   ),
@@ -158,7 +155,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
         padding: EdgeInsets.zero,
         child: Column(
           children: [
-            const Icon(Icons.monetization_on, size: 48, color: AppTheme.gold),
+            Icon(Icons.monetization_on, size: 48, color: AppTheme.gold),
             const SizedBox(height: 12),
             Text(
               '$_balance',
@@ -167,7 +164,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const Text('可用点数', style: TextStyle(color: AppTheme.textSecondary)),
+            Text('可用点数', style: TextStyle(color: AppTheme.textSecondary)),
           ],
         ),
       ),
@@ -194,7 +191,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
                     color: AppTheme.gold.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.stars_rounded, color: AppTheme.gold),
+                  child: Icon(Icons.stars_rounded, color: AppTheme.gold),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -210,7 +207,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
                       const SizedBox(height: 4),
                       Text(
                         '${pkg.credits} 点数',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppTheme.textSecondary,
                           fontSize: 13,
                         ),
@@ -240,7 +237,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
                       minimumSize: const Size(72, 36),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
-                    child: const Text('购买'),
+                    child: Text('购买'),
                   ),
                 ),
               ],
@@ -289,7 +286,7 @@ class _CreditsPageState extends ConsumerState<CreditsPage> {
             ),
             TextButton(
               onPressed: _load,
-              child: const Text('刷新', style: TextStyle(fontSize: 12)),
+              child: Text('刷新', style: TextStyle(fontSize: 12)),
             ),
           ],
         ),
@@ -363,7 +360,7 @@ class _CreditsHeader extends StatelessWidget {
           tooltip: '返回',
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -417,7 +414,7 @@ class _RuleRow extends StatelessWidget {
           Flexible(
             child: Text(
               cost,
-              style: const TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: AppTheme.textSecondary),
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,
             ),

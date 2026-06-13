@@ -86,10 +86,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                 top: 8,
                 right: 8,
                 child: IconButton(
-                  icon: const Icon(
-                    Icons.fullscreen_exit,
-                    color: Colors.white70,
-                  ),
+                  icon: Icon(Icons.fullscreen_exit, color: Colors.white70),
                   onPressed: notifier.toggleFullscreen,
                   style: IconButton.styleFrom(backgroundColor: Colors.black38),
                 ),
@@ -184,9 +181,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
               if (_isRegenerating)
                 Container(
                   color: Colors.black.withValues(alpha: 0.62),
-                  child: const Center(
-                    child: StarRingLoader(label: 'AI 正在重新生成游戏'),
-                  ),
+                  child: Center(child: StarRingLoader(label: 'AI 正在重新生成游戏')),
                 ),
             ],
           ),
@@ -200,10 +195,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
       await notifier.shareCode();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('已打开分享面板'),
-          backgroundColor: AppTheme.secondary,
-        ),
+        SnackBar(content: Text('已打开分享面板'), backgroundColor: AppTheme.secondary),
       );
     } catch (e) {
       if (!context.mounted) return;
@@ -317,13 +309,13 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline_rounded,
                           size: 52,
                           color: AppTheme.error,
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           '预览加载失败',
                           style: TextStyle(
                             color: AppTheme.textPrimary,
@@ -334,7 +326,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                         const SizedBox(height: 8),
                         Text(
                           _webViewErrorMessage,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppTheme.textSecondary,
                             fontSize: 13,
                           ),
@@ -347,7 +339,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                             backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('重试'),
+                          child: Text('重试'),
                         ),
                       ],
                     ),
@@ -405,13 +397,9 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      Icons.help_outline,
-                      size: 22,
-                      color: AppTheme.primary,
-                    ),
+                    Icon(Icons.help_outline, size: 22, color: AppTheme.primary),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         '游戏预览帮助',
                         style: TextStyle(
@@ -422,10 +410,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        color: AppTheme.textSecondary,
-                      ),
+                      icon: Icon(Icons.close, color: AppTheme.textSecondary),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
@@ -466,9 +451,9 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                     onPressed: () => Navigator.pop(ctx),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textSecondary,
-                      side: const BorderSide(color: AppTheme.outlineDark),
+                      side: BorderSide(color: AppTheme.outlineDark),
                     ),
-                    child: const Text('知道了'),
+                    child: Text('知道了'),
                   ),
                 ),
               ],
@@ -493,7 +478,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -502,10 +487,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                 const SizedBox(height: 2),
                 Text(
                   desc,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -520,7 +502,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceVariant,
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.music_note, color: AppTheme.primary, size: 20),
             SizedBox(width: 8),
@@ -540,7 +522,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   '当前游戏的音频由 Web Audio API 驱动。\n\n'
                   '音效提示：\n'
                   '• 游戏中内置了音效（射击、跳跃、收集等）\n'
@@ -557,18 +539,18 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
                       AudioBridge().stop();
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text('已停止所有游戏音频'),
                           backgroundColor: AppTheme.primary,
                           duration: Duration(seconds: 2),
                         ),
                       );
                     },
-                    icon: const Icon(Icons.stop, size: 16),
-                    label: const Text('停止所有音频'),
+                    icon: Icon(Icons.stop, size: 16),
+                    label: Text('停止所有音频'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.redAccent,
-                      side: const BorderSide(color: Colors.redAccent),
+                      side: BorderSide(color: Colors.redAccent),
                     ),
                   ),
                 ),
@@ -579,10 +561,7 @@ class _PreviewPageState extends ConsumerState<PreviewPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              '关闭',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
+            child: Text('关闭', style: TextStyle(color: AppTheme.textSecondary)),
           ),
         ],
       ),
@@ -679,7 +658,7 @@ class _PreviewTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       child: Row(
         children: [
           ForgeIconButton(
@@ -691,22 +670,31 @@ class _PreviewTopBar extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  '游戏预览',
+                  'PREVIEW // RUN.01',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
+                    color: AppTheme.textTertiary,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                SizedBox(height: 3),
+                Text(
+                  'Preview.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontStyle: FontStyle.italic),
+                ),
+                const SizedBox(height: 3),
                 Row(
                   children: [
                     ForgeChip(
-                      label: '运行中',
+                      label: 'RUNNING',
                       tone: ForgeChipTone.online,
                       dot: true,
                     ),
@@ -735,10 +723,7 @@ class _PreviewTopBar extends StatelessWidget {
           const SizedBox(width: 6),
           PopupMenuButton<String>(
             color: AppTheme.surfaceVariant,
-            icon: const Icon(
-              Icons.more_horiz_rounded,
-              color: AppTheme.textPrimary,
-            ),
+            icon: Icon(Icons.more_horiz_rounded, color: AppTheme.textPrimary),
             onSelected: (value) {
               if (value == 'help') onHelp();
               if (value == 'regenerate') onRegenerate();
@@ -761,39 +746,38 @@ class _ForgePreviewTabStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ForgeGlassCard(
-      padding: const EdgeInsets.all(4),
-      borderRadius: BorderRadius.circular(14),
-      accent: AppTheme.primary,
-      accentOpacity: 0.04,
-      borderOpacity: 0.08,
-      child: TabBar(
-        controller: controller,
-        indicator: BoxDecoration(
-          color: AppTheme.primary.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(11),
-          border: Border.all(
-            color: AppTheme.primary.withValues(alpha: 0.38),
-            width: 0.8,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.textPrimary.withValues(alpha: 0.18),
+            width: 0.6,
           ),
         ),
+      ),
+      child: TabBar(
+        controller: controller,
+        indicatorColor: AppTheme.primary,
+        indicatorWeight: 2,
         dividerColor: Colors.transparent,
         labelColor: AppTheme.textPrimary,
         unselectedLabelColor: AppTheme.textTertiary,
-        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+        labelStyle: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1,
         ),
-        indicatorSize: TabBarIndicatorSize.tab,
+        unselectedLabelStyle: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1,
+        ),
+        indicatorSize: TabBarIndicatorSize.label,
         tabs: const [
-          Tab(text: '代码', icon: Icon(Icons.code_rounded, size: 15)),
-          Tab(
-            text: '对话',
-            icon: Icon(Icons.chat_bubble_outline_rounded, size: 15),
-          ),
-          Tab(text: '素材', icon: Icon(Icons.palette_outlined, size: 15)),
-          Tab(text: '信息', icon: Icon(Icons.info_outline_rounded, size: 15)),
+          Tab(text: 'CODE'),
+          Tab(text: 'CHAT'),
+          Tab(text: 'ASSETS'),
+          Tab(text: 'META'),
         ],
       ),
     );

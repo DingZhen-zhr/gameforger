@@ -351,7 +351,7 @@ class _SpecCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const ForgeChip(label: '已锁', tone: ForgeChipTone.violet),
+              ForgeChip(label: '已锁', tone: ForgeChipTone.violet),
             ],
           ),
           const SizedBox(height: 8),

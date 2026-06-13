@@ -28,35 +28,72 @@ class LiquidGlassSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = AppTheme.textPrimary.withValues(
+      alpha: AppTheme.isLight ? borderOpacity * 0.72 : borderOpacity,
+    );
+    final highlight = Colors.white.withValues(
+      alpha: AppTheme.isLight ? tintOpacity * 2.0 : tintOpacity * 0.92,
+    );
+    final baseTint = tintColor.withValues(alpha: tintOpacity);
     return ClipRRect(
       borderRadius: borderRadius,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
         child: Container(
           decoration: BoxDecoration(
-            color: surfaceColor,
+            color:
+                surfaceColor ??
+                AppTheme.surfaceDark.withValues(
+                  alpha: AppTheme.isLight ? 0.56 : 0.5,
+                ),
             gradient: LinearGradient(
               colors: [
-                tintColor.withValues(alpha: tintOpacity),
-                tintColor.withValues(alpha: tintOpacity * 0.72),
+                highlight,
+                baseTint,
+                AppTheme.surfaceVariant.withValues(
+                  alpha: AppTheme.isLight ? 0.26 : 0.2,
+                ),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
+              stops: const [0.0, 0.46, 1.0],
             ),
             borderRadius: borderRadius,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: borderOpacity),
-              width: 1,
-            ),
+            border: Border.all(color: borderColor, width: 0.8),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.glassShadow,
+                color: AppTheme.glassShadow.withValues(alpha: 0.55),
                 blurRadius: 24,
                 offset: const Offset(0, 14),
               ),
+              BoxShadow(
+                color: Colors.white.withValues(
+                  alpha: AppTheme.isLight ? 0.34 : 0.08,
+                ),
+                blurRadius: 1,
+                offset: const Offset(0, 1),
+              ),
             ],
           ),
-          child: Padding(padding: padding, child: child),
+          child: Stack(
+            children: [
+              Positioned(
+                top: 1,
+                left: 10,
+                right: 10,
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(
+                      alpha: AppTheme.isLight ? 0.48 : 0.16,
+                    ),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              Padding(padding: padding, child: child),
+            ],
+          ),
         ),
       ),
     );
@@ -89,7 +126,7 @@ class GlassSectionHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 13,
                     height: 1.25,
@@ -155,7 +192,7 @@ class GlassMetricCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 12,
                     height: 1.2,
@@ -165,7 +202,7 @@ class GlassMetricCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     hint!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textTertiary,
                       fontSize: 11,
                       height: 1.2,
@@ -213,72 +250,122 @@ class FloatingGlassTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: LiquidGlassSurface(
-          borderRadius: BorderRadius.circular(30),
-          blurSigma: 26,
-          tintOpacity: 0.18,
-          borderOpacity: 0.16,
-          surfaceColor: Colors.white.withValues(alpha: 0.02),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Row(
-            children: List.generate(items.length, (index) {
-              final item = items[index];
-              final selected = currentIndex == index;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onChanged(index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? item.accent.withValues(alpha: 0.16)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(22),
-                      border: selected
-                          ? Border.all(
-                              color: item.accent.withValues(alpha: 0.22),
-                              width: 1,
-                            )
-                          : null,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          selected ? item.selectedIcon : item.icon,
-                          size: 22,
-                          color: selected
-                              ? item.accent
-                              : AppTheme.textSecondary,
-                        ),
-                        const SizedBox(height: 4),
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 220),
-                          style: TextStyle(
-                            color: selected
-                                ? AppTheme.textPrimary
-                                : AppTheme.textSecondary,
-                            fontSize: 11,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                            height: 1.0,
-                          ),
-                          child: Text(item.label),
-                        ),
-                      ],
-                    ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        if (velocity.abs() < 220) return;
+        final next = velocity < 0 ? currentIndex + 1 : currentIndex - 1;
+        if (next >= 0 && next < items.length) {
+          onChanged(next);
+        }
+      },
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.bgDark.withValues(
+                alpha: AppTheme.isLight ? 0.84 : 0.9,
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: AppTheme.textPrimary.withValues(
+                    alpha: AppTheme.isLight ? 0.16 : 0.2,
                   ),
+                  width: 0.6,
                 ),
-              );
-            }),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.glassShadow.withValues(alpha: 0.18),
+                  blurRadius: 14,
+                  offset: const Offset(0, -8),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.fromLTRB(
+              8,
+              10,
+              8,
+              MediaQuery.paddingOf(context).bottom + 8,
+            ),
+            child: SizedBox(
+              height: 48,
+              child: Row(
+                children: List.generate(items.length, (index) {
+                  final item = items[index];
+                  final selected = currentIndex == index;
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onChanged(index),
+                      child: AnimatedScale(
+                        scale: selected ? 1.08 : 1.0,
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOutCubic,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: [
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 180),
+                              curve: Curves.easeOutCubic,
+                              top: selected ? -10 : -4,
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 160),
+                                opacity: selected ? 1 : 0,
+                                child: Container(
+                                  width: 14,
+                                  height: 2,
+                                  color: item.accent,
+                                ),
+                              ),
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  curve: Curves.easeOutCubic,
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? item.accent.withValues(alpha: 0.10)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    selected ? item.selectedIcon : item.icon,
+                                    size: 20,
+                                    color: selected
+                                        ? item.accent
+                                        : AppTheme.textTertiary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.label.toUpperCase(),
+                                  style: TextStyle(
+                                    color: selected
+                                        ? item.accent
+                                        : AppTheme.textTertiary,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.8,
+                                    height: 1.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
           ),
         ),
       ),

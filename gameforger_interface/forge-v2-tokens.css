@@ -1,0 +1,175 @@
+/* ──────────────────────────────────────────────────────────────
+ * GameForger v2 — 双方向 / 双主题
+ *
+ * 命名约定:
+ *   --a-*   方向 A · iOS 原生派
+ *   --b-*   方向 B · 编辑工坊派
+ *   作用域:
+ *     [data-dir="a"][data-theme="light"]  ...
+ *     [data-dir="a"][data-theme="dark"]   ...
+ *     [data-dir="b"][data-theme="light"]  ...
+ *     [data-dir="b"][data-theme="dark"]   ...
+ * ────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  方向 A · iOS 原生派 (Linear / Settings.app)                  ║
+ * ║  纯苹果系统软件感，分组列表，柔和大圆角                          ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+[data-dir="a"] {
+  --font-ui: 'Inter', -apple-system, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* iOS-soft 圆角 */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+}
+
+[data-dir="a"][data-theme="light"] {
+  --bg:           #F2F2F7;     /* iOS systemGroupedBackground */
+  --surface:      #FFFFFF;
+  --elevated:     #FFFFFF;
+  --secondary-bg: #E5E5EA;     /* tertiary */
+
+  --text-1: #000000;
+  --text-2: rgba(60, 60, 67, 0.60);
+  --text-3: rgba(60, 60, 67, 0.30);
+  --text-4: rgba(60, 60, 67, 0.18);
+
+  --line:        rgba(60, 60, 67, 0.16);
+  --line-strong: rgba(60, 60, 67, 0.28);
+
+  --accent:       #16A34A;   /* user's pick */
+  --accent-hi:    #15803D;
+  --accent-tint:  rgba(22, 163, 74, 0.10);
+  --accent-line:  rgba(22, 163, 74, 0.30);
+  --accent-fg:    #FFFFFF;
+
+  --good: #16A34A;
+  --warn: #E0A800;
+  --bad:  #DC2626;
+
+  /* canvas of the iOS frame */
+  --canvas: #F2F2F7;
+}
+
+[data-dir="a"][data-theme="dark"] {
+  --bg:           #000000;     /* iOS dark uses pure black */
+  --surface:      #1C1C1E;
+  --elevated:     #2C2C2E;
+  --secondary-bg: #2C2C2E;
+
+  --text-1: #FFFFFF;
+  --text-2: rgba(235, 235, 245, 0.60);
+  --text-3: rgba(235, 235, 245, 0.30);
+  --text-4: rgba(235, 235, 245, 0.18);
+
+  --line:        rgba(84, 84, 88, 0.55);
+  --line-strong: rgba(84, 84, 88, 0.85);
+
+  --accent:       #4ADE80;
+  --accent-hi:    #5EEB94;
+  --accent-tint:  rgba(74, 222, 128, 0.16);
+  --accent-line:  rgba(74, 222, 128, 0.40);
+  --accent-fg:    #062711;
+
+  --good: #4ADE80;
+  --warn: #F2B240;
+  --bad:  #FF453A;
+
+  --canvas: #000000;
+}
+
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  方向 B · 编辑工坊派 (Magazine + Terminal)                    ║
+ * ║  强字体排版,米色纸感,森林绿强调                                 ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+[data-dir="b"] {
+  --font-ui: 'Inter', -apple-system, "SF Pro Text", system-ui, sans-serif;
+  --font-display: 'Instrument Serif', 'Times New Roman', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
+
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+}
+
+[data-dir="b"][data-theme="light"] {
+  --bg:           #F7F4ED;     /* warm cream paper */
+  --surface:      #FCFAF5;
+  --elevated:     #FFFFFF;
+  --secondary-bg: #EFE9DC;
+
+  --text-1: #16140E;
+  --text-2: #5F584C;
+  --text-3: #918A7C;
+  --text-4: #BFB8A8;
+
+  --line:        rgba(22, 20, 14, 0.10);
+  --line-strong: rgba(22, 20, 14, 0.22);
+
+  --accent:       #1E7A3E;     /* forest, more muted */
+  --accent-hi:    #166130;
+  --accent-tint:  rgba(30, 122, 62, 0.10);
+  --accent-line:  rgba(30, 122, 62, 0.30);
+  --accent-fg:    #FFFFFF;
+
+  --good: #1E7A3E;
+  --warn: #A8761F;
+  --bad:  #B5301E;
+
+  --canvas: #EAE3D2;
+}
+
+[data-dir="b"][data-theme="dark"] {
+  --bg:           #14120E;
+  --surface:      #1F1B14;
+  --elevated:     #29241B;
+  --secondary-bg: #29241B;
+
+  --text-1: #F4ECD8;
+  --text-2: #A89F8A;
+  --text-3: #75705F;
+  --text-4: #4D483F;
+
+  --line:        rgba(244, 236, 216, 0.10);
+  --line-strong: rgba(244, 236, 216, 0.20);
+
+  --accent:       #5BC078;
+  --accent-hi:    #74D391;
+  --accent-tint:  rgba(91, 192, 120, 0.14);
+  --accent-line:  rgba(91, 192, 120, 0.36);
+  --accent-fg:    #0A1E10;
+
+  --good: #5BC078;
+  --warn: #E4B454;
+  --bad:  #E5645A;
+
+  --canvas: #0E0C09;
+}
+
+/* canvas-wide — design-canvas hard-codes its bg inline, so we !important-override */
+body .design-canvas {
+  background: #E7E2D6 !important;
+  transition: background 200ms ease;
+}
+body[data-canvas-theme="dark"] .design-canvas {
+  background: #0B0A09 !important;
+}
+
+/* hide scrollbars inside artboards */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* selection */
+::selection { background: rgba(22, 163, 74, 0.20); }

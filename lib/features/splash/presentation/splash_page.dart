@@ -7,7 +7,7 @@ class SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: CosmicBackground(
         child: Center(
           child: Padding(
@@ -44,10 +44,10 @@ class _GradientLogoText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShaderMask(
-      shaderCallback: (bounds) => const LinearGradient(
+      shaderCallback: (bounds) => LinearGradient(
         colors: [Colors.white, AppTheme.cyan, Color(0xFF9A7DFF)],
       ).createShader(bounds),
-      child: const Text(
+      child: Text(
         'GameForger',
         style: TextStyle(
           color: Colors.white,

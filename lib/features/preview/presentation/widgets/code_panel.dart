@@ -116,7 +116,7 @@ class _CodePanelState extends ConsumerState<CodePanel> {
         scrollDirection: Axis.horizontal,
         child: SelectableText(
           code,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 12,
             color: AppTheme.textPrimary,
@@ -133,13 +133,13 @@ class _CodePanelState extends ConsumerState<CodePanel> {
       child: TextField(
         controller: _editController,
         maxLines: null,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 12,
           color: AppTheme.textPrimary,
           height: 1.5,
         ),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.zero,
           isDense: true,
@@ -160,10 +160,7 @@ class _CodePanelState extends ConsumerState<CodePanel> {
   void _copyCode(BuildContext context, String code) {
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('代码已复制到剪贴板'),
-        duration: Duration(seconds: 2),
-      ),
+      SnackBar(content: Text('代码已复制到剪贴板'), duration: Duration(seconds: 2)),
     );
   }
 }

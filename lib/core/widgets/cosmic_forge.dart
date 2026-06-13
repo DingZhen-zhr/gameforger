@@ -1,6 +1,5 @@
-import 'dart:math' as math;
 import 'dart:ui';
-
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -33,61 +32,53 @@ class _CosmicBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bg = AppTheme.isLight
+        ? [const Color(0xFFFBF8F0), AppTheme.bgDark, const Color(0xFFECE4D5)]
+        : [const Color(0xFF17140F), AppTheme.bgDark, const Color(0xFF0E0C09)];
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.bgDark,
-        gradient: RadialGradient(
-          center: Alignment(-0.72, -0.78),
-          radius: 0.86,
-          colors: [Color(0x3F7B5CFF), Color(0x160A0916), AppTheme.bgDark],
-          stops: [0, 0.48, 1],
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: bg,
         ),
       ),
-      child: CustomPaint(painter: _StarFieldPainter()),
+      child: CustomPaint(painter: _PaperGrainPainter()),
     );
   }
 }
 
-class _StarFieldPainter extends CustomPainter {
+class _PaperGrainPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
-    final stars = <({double x, double y, double r, double a})>[
-      (x: 0.12, y: 0.18, r: 1.2, a: 0.62),
-      (x: 0.82, y: 0.13, r: 0.8, a: 0.48),
-      (x: 0.68, y: 0.28, r: 1.1, a: 0.38),
-      (x: 0.22, y: 0.43, r: 0.7, a: 0.44),
-      (x: 0.91, y: 0.47, r: 1.0, a: 0.34),
-      (x: 0.44, y: 0.64, r: 0.9, a: 0.36),
-      (x: 0.14, y: 0.78, r: 1.0, a: 0.42),
-      (x: 0.78, y: 0.83, r: 0.7, a: 0.32),
-    ];
-    for (final star in stars) {
-      paint.color = Colors.white.withValues(alpha: star.a);
-      canvas.drawCircle(
-        Offset(size.width * star.x, size.height * star.y),
-        star.r,
-        paint,
+    for (var i = 0; i < 42; i++) {
+      final x = ((i * 37) % 101) / 100;
+      final y = ((i * 61) % 97) / 96;
+      paint.color = AppTheme.textPrimary.withValues(
+        alpha: i.isEven ? 0.018 : 0.01,
       );
+      canvas.drawCircle(Offset(size.width * x, size.height * y), 0.65, paint);
     }
 
-    final glowPaint = Paint()
+    final wash = Paint()
       ..shader =
           RadialGradient(
             colors: [
-              AppTheme.secondary.withValues(alpha: 0.12),
+              AppTheme.primary.withValues(alpha: 0.08),
               Colors.transparent,
             ],
           ).createShader(
             Rect.fromCircle(
-              center: Offset(size.width * 0.82, size.height * 0.22),
-              radius: size.width * 0.62,
+              center: Offset(size.width * 0.85, size.height * 0.08),
+              radius: size.width * 0.7,
             ),
           );
     canvas.drawCircle(
-      Offset(size.width * 0.82, size.height * 0.22),
-      size.width * 0.62,
-      glowPaint,
+      Offset(size.width * 0.85, size.height * 0.08),
+      size.width * 0.7,
+      wash,
     );
   }
 
@@ -99,7 +90,7 @@ class ForgeGlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final BorderRadiusGeometry borderRadius;
-  final Color accent;
+  final Color? accent;
   final double accentOpacity;
   final double borderOpacity;
   final bool glow;
@@ -122,38 +113,70 @@ class ForgeGlassCard extends StatelessWidget {
     final card = ClipRRect(
       borderRadius: borderRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: borderRadius,
+            color: AppTheme.surfaceDark.withValues(
+              alpha: AppTheme.isLight ? 0.78 : 0.86,
+            ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withValues(alpha: 0.065),
-                accent.withValues(alpha: accentOpacity),
-                Colors.white.withValues(alpha: 0.028),
+                Colors.white.withValues(alpha: AppTheme.isLight ? 0.28 : 0.06),
+                (accent ?? AppTheme.textPrimary).withValues(
+                  alpha: accentOpacity,
+                ),
+                AppTheme.surfaceVariant.withValues(
+                  alpha: AppTheme.isLight ? 0.16 : 0.1,
+                ),
               ],
+              stops: const [0.0, 0.46, 1.0],
             ),
+            borderRadius: borderRadius,
             border: Border.all(
-              color: Colors.white.withValues(alpha: borderOpacity),
-              width: 0.8,
+              color: AppTheme.textPrimary.withValues(
+                alpha: AppTheme.isLight ? 0.13 : 0.18,
+              ),
+              width: 0.75,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.34),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-              if (glow)
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.18),
-                  blurRadius: 30,
-                  offset: const Offset(0, 8),
+                color: AppTheme.glassShadow.withValues(
+                  alpha: glow ? 0.46 : 0.16,
                 ),
+                blurRadius: glow ? 24 : 12,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
+                color: Colors.white.withValues(
+                  alpha: AppTheme.isLight ? 0.2 : 0.04,
+                ),
+                blurRadius: 1,
+                offset: const Offset(0, 1),
+              ),
             ],
           ),
-          child: Padding(padding: padding, child: child),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: borderRadius,
+                      border: Border.all(
+                        color: Colors.white.withValues(
+                          alpha: AppTheme.isLight ? 0.12 : 0.04,
+                        ),
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(padding: padding, child: child),
+            ],
+          ),
         ),
       ),
     );
@@ -166,7 +189,7 @@ class ForgeGlassCard extends StatelessWidget {
 class ForgeIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
-  final Color accent;
+  final Color? accent;
   final double size;
   final double iconSize;
   final bool glow;
@@ -176,7 +199,7 @@ class ForgeIconButton extends StatelessWidget {
     super.key,
     required this.icon,
     this.onTap,
-    this.accent = AppTheme.primary,
+    this.accent,
     this.size = 38,
     this.iconSize = 18,
     this.glow = false,
@@ -185,53 +208,64 @@ class ForgeIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = ClipOval(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: CupertinoButton(
-          minimumSize: Size(size, size),
-          padding: EdgeInsets.zero,
-          onPressed: onTap,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: glow
-                    ? [
-                        accent.withValues(alpha: 0.34),
-                        accent.withValues(alpha: 0.14),
-                      ]
-                    : [
-                        Colors.white.withValues(alpha: 0.075),
-                        Colors.white.withValues(alpha: 0.04),
-                      ],
-              ),
-              border: Border.all(
-                color: glow
-                    ? accent.withValues(alpha: 0.42)
-                    : Colors.white.withValues(alpha: 0.1),
-                width: 0.8,
-              ),
-              boxShadow: glow
-                  ? [
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.36),
-                        blurRadius: 16,
-                      ),
-                    ]
-                  : null,
+    final effectiveAccent = accent ?? AppTheme.primary;
+    final button = CupertinoButton(
+      minimumSize: Size(size, size),
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(12),
+      onPressed: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: glow
+              ? effectiveAccent.withValues(
+                  alpha: AppTheme.isLight ? 0.88 : 0.82,
+                )
+              : AppTheme.surfaceDark.withValues(
+                  alpha: AppTheme.isLight ? 0.48 : 0.22,
+                ),
+          gradient: glow
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.28),
+                    effectiveAccent,
+                  ],
+                )
+              : LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(
+                      alpha: AppTheme.isLight ? 0.36 : 0.11,
+                    ),
+                    Colors.white.withValues(
+                      alpha: AppTheme.isLight ? 0.08 : 0.02,
+                    ),
+                  ],
+                ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: (glow ? effectiveAccent : AppTheme.textPrimary).withValues(
+              alpha: glow ? 0.34 : 0.22,
             ),
-            alignment: Alignment.center,
-            child: Icon(
-              icon,
-              color: glow ? Colors.white : AppTheme.textPrimary,
-              size: iconSize,
-            ),
+            width: 0.7,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.glassShadow.withValues(alpha: 0.22),
+              blurRadius: 12,
+              offset: const Offset(0, 7),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          icon,
+          color: glow ? AppTheme.primaryContainer : AppTheme.textPrimary,
+          size: iconSize,
         ),
       ),
     );
@@ -243,7 +277,7 @@ class ForgePrimaryButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback? onPressed;
-  final Color accent;
+  final Color? accent;
   final bool compact;
 
   const ForgePrimaryButton({
@@ -251,12 +285,13 @@ class ForgePrimaryButton extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onPressed,
-    this.accent = AppTheme.primary,
+    this.accent,
     this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveAccent = accent ?? AppTheme.primary;
     return CupertinoButton(
       minimumSize: Size(compact ? 36 : 64, compact ? 36 : 52),
       padding: EdgeInsets.zero,
@@ -272,45 +307,63 @@ class ForgePrimaryButton extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: onPressed == null
                 ? [
-                    Colors.white.withValues(alpha: 0.06),
-                    Colors.white.withValues(alpha: 0.03),
+                    Colors.white.withValues(alpha: 0.12),
+                    Colors.white.withValues(alpha: 0.04),
                   ]
-                : [
-                    Colors.white.withValues(alpha: 0.2),
-                    accent.withValues(alpha: 0.9),
-                    AppTheme.primaryContainer.withValues(alpha: 0.96),
-                  ],
+                : [effectiveAccent, effectiveAccent],
           ),
           border: Border.all(
-            color: Colors.white.withValues(
-              alpha: onPressed == null ? 0.08 : 0.2,
-            ),
+            color: onPressed == null
+                ? Colors.white.withValues(alpha: 0.08)
+                : effectiveAccent.withValues(alpha: 0.3),
             width: 0.8,
           ),
-          boxShadow: onPressed == null
-              ? null
-              : [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.42),
-                    blurRadius: compact ? 14 : 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
-          children: [
-            Icon(icon, color: Colors.white, size: compact ? 15 : 19),
-            const SizedBox(width: 7),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: compact ? 13 : 16,
-                fontWeight: FontWeight.w700,
+          boxShadow: [
+            BoxShadow(
+              color: effectiveAccent.withValues(
+                alpha: onPressed == null ? 0 : 0.26,
               ),
-              overflow: TextOverflow.ellipsis,
+              blurRadius: 18,
+              offset: const Offset(0, 9),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.12),
+              blurRadius: 1,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              top: 1,
+              left: 8,
+              right: 8,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.28),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+              children: [
+                Icon(icon, color: Colors.white, size: compact ? 15 : 19),
+                const SizedBox(width: 7),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: compact ? 13 : 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ],
         ),
@@ -348,14 +401,16 @@ class ForgeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = _chipColors(tone);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      constraints: const BoxConstraints(minHeight: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: colors.bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colors.border, width: 0.8),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: colors.border, width: 0.6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (dot) ...[
             Container(
@@ -385,8 +440,9 @@ class ForgeChip extends StatelessWidget {
             style: TextStyle(
               color: colors.fg,
               fontSize: 11,
-              fontWeight: FontWeight.w700,
-              height: 1.0,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.4,
+              height: 1.1,
             ),
           ),
         ],
@@ -400,43 +456,43 @@ class ForgeChip extends StatelessWidget {
     switch (tone) {
       case ForgeChipTone.online:
         return (
-          bg: AppTheme.online.withValues(alpha: 0.1),
-          border: AppTheme.online.withValues(alpha: 0.32),
-          fg: const Color(0xFF9AF5C8),
+          bg: AppTheme.primary.withValues(alpha: 0.14),
+          border: AppTheme.primary.withValues(alpha: 0.36),
+          fg: AppTheme.primary,
           dot: AppTheme.online,
         );
       case ForgeChipTone.offline:
         return (
-          bg: Colors.white.withValues(alpha: 0.06),
-          border: Colors.white.withValues(alpha: 0.12),
+          bg: Colors.transparent,
+          border: AppTheme.textPrimary.withValues(alpha: 0.18),
           fg: AppTheme.textTertiary,
           dot: AppTheme.textTertiary,
         );
       case ForgeChipTone.violet:
         return (
           bg: AppTheme.primary.withValues(alpha: 0.14),
-          border: const Color(0xFF9A7DFF).withValues(alpha: 0.36),
-          fg: const Color(0xFFCBB8FF),
-          dot: const Color(0xFF9A7DFF),
+          border: AppTheme.primary.withValues(alpha: 0.36),
+          fg: AppTheme.primary,
+          dot: AppTheme.primary,
         );
       case ForgeChipTone.cyan:
         return (
-          bg: AppTheme.secondary.withValues(alpha: 0.12),
-          border: AppTheme.secondary.withValues(alpha: 0.36),
-          fg: AppTheme.cyan,
-          dot: AppTheme.secondary,
+          bg: Colors.transparent,
+          border: AppTheme.textPrimary.withValues(alpha: 0.18),
+          fg: AppTheme.textSecondary,
+          dot: AppTheme.primary,
         );
       case ForgeChipTone.gold:
         return (
           bg: AppTheme.gold.withValues(alpha: 0.14),
           border: AppTheme.gold.withValues(alpha: 0.36),
-          fg: const Color(0xFFFFD99E),
+          fg: AppTheme.gold,
           dot: AppTheme.gold,
         );
       case ForgeChipTone.draft:
         return (
-          bg: Colors.white.withValues(alpha: 0.05),
-          border: Colors.white.withValues(alpha: 0.12),
+          bg: Colors.transparent,
+          border: AppTheme.textPrimary.withValues(alpha: 0.18),
           fg: AppTheme.textTertiary,
           dot: AppTheme.textTertiary,
         );
@@ -444,13 +500,13 @@ class ForgeChip extends StatelessWidget {
         return (
           bg: AppTheme.error.withValues(alpha: 0.12),
           border: AppTheme.error.withValues(alpha: 0.32),
-          fg: const Color(0xFFFF8A96),
+          fg: AppTheme.error,
           dot: AppTheme.error,
         );
       case ForgeChipTone.neutral:
         return (
-          bg: Colors.white.withValues(alpha: 0.07),
-          border: Colors.white.withValues(alpha: 0.12),
+          bg: Colors.transparent,
+          border: AppTheme.textPrimary.withValues(alpha: 0.18),
           fg: AppTheme.textSecondary,
           dot: AppTheme.primary,
         );
@@ -460,18 +516,19 @@ class ForgeChip extends StatelessWidget {
 
 class ForgeEnergyBar extends StatelessWidget {
   final double value;
-  final Color color;
+  final Color? color;
   final double height;
 
   const ForgeEnergyBar({
     super.key,
     required this.value,
-    this.color = AppTheme.primary,
+    this.color,
     this.height = 4,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? AppTheme.primary;
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: Container(
@@ -484,12 +541,15 @@ class ForgeEnergyBar extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: color == AppTheme.gold
+                  colors: effectiveColor == AppTheme.gold
                       ? [AppTheme.gold, const Color(0xFFFFE7B0)]
-                      : [color, AppTheme.cyan],
+                      : [effectiveColor, AppTheme.cyan],
                 ),
                 boxShadow: [
-                  BoxShadow(color: color.withValues(alpha: 0.7), blurRadius: 8),
+                  BoxShadow(
+                    color: effectiveColor.withValues(alpha: 0.7),
+                    blurRadius: 8,
+                  ),
                 ],
               ),
             ),
@@ -582,7 +642,7 @@ class _NebulaOrbPainter extends CustomPainter {
     final core = Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.35, -0.35),
-        colors: const [
+        colors: [
           Colors.white,
           Color(0xFFC8B8FF),
           AppTheme.primary,
@@ -669,27 +729,9 @@ class NebulaSeed extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size * 0.28),
-        gradient: RadialGradient(
-          center: const Alignment(-0.35, -0.38),
-          colors: [
-            Colors.white.withValues(alpha: 0.52),
-            base.withValues(alpha: 0.88),
-            AppTheme.primaryContainer.withValues(alpha: 0.98),
-          ],
-          stops: const [0, 0.38, 1],
-        ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.16),
-          width: 0.8,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: base.withValues(alpha: 0.28),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(size * 0.18),
+        color: base.withValues(alpha: 0.12),
+        border: Border.all(color: base.withValues(alpha: 0.36), width: 0.7),
       ),
       child: CustomPaint(painter: _NebulaSeedPainter(base)),
     );
@@ -698,13 +740,81 @@ class NebulaSeed extends StatelessWidget {
   Color _accentFromHue(int hue) {
     final colors = [
       AppTheme.primary,
-      AppTheme.secondary,
-      const Color(0xFF5BE7A7),
+      AppTheme.textSecondary,
+      AppTheme.primary,
       AppTheme.gold,
-      const Color(0xFFCBB8FF),
+      AppTheme.textTertiary,
     ];
     return colors[hue.abs() % colors.length];
   }
+}
+
+class ForgeAppMark extends StatelessWidget {
+  final double size;
+
+  const ForgeAppMark({super.key, this.size = 24});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size * 0.22),
+        color: AppTheme.surfaceDark.withValues(
+          alpha: AppTheme.isLight ? 0.82 : 0.74,
+        ),
+        border: Border.all(
+          color: AppTheme.textPrimary.withValues(alpha: 0.18),
+          width: 0.7,
+        ),
+      ),
+      child: CustomPaint(painter: _ForgeAppMarkPainter()),
+    );
+  }
+}
+
+class _ForgeAppMarkPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final unit = size.width / 24;
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.55 * unit;
+
+    final green = AppTheme.primary;
+    final text = AppTheme.textPrimary;
+
+    paint.color = green;
+    final blade = Path()
+      ..moveTo(6.5 * unit, 16.5 * unit)
+      ..lineTo(6.5 * unit, 7.5 * unit)
+      ..lineTo(13.8 * unit, 7.5 * unit)
+      ..moveTo(6.5 * unit, 12 * unit)
+      ..lineTo(12 * unit, 12 * unit);
+    canvas.drawPath(blade, paint);
+
+    paint.color = text.withValues(alpha: 0.92);
+    final spark = Path()
+      ..moveTo(15.7 * unit, 7.2 * unit)
+      ..lineTo(18.2 * unit, 9.7 * unit)
+      ..lineTo(15.7 * unit, 12.2 * unit)
+      ..lineTo(13.2 * unit, 9.7 * unit)
+      ..close();
+    canvas.drawPath(spark, paint);
+
+    paint.color = green.withValues(alpha: 0.75);
+    canvas.drawLine(
+      Offset(15 * unit, 16.5 * unit),
+      Offset(19 * unit, 16.5 * unit),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 class _NebulaSeedPainter extends CustomPainter {
@@ -715,27 +825,21 @@ class _NebulaSeedPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
-      ..strokeWidth = 0.8
+      ..color = color
+      ..strokeWidth = 1.3
       ..style = PaintingStyle.stroke;
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(-0.55);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset.zero,
-        width: size.width * 0.78,
-        height: size.height * 0.24,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: center,
+          width: size.width * 0.44,
+          height: size.height * 0.44,
+        ),
+        Radius.circular(size.width * 0.08),
       ),
       paint,
     );
-    canvas.restore();
-    canvas.drawCircle(center, size.width * 0.07, Paint()..color = Colors.white);
-    canvas.drawCircle(
-      Offset(size.width * 0.7, size.height * 0.66),
-      size.width * 0.17,
-      Paint()..color = color.withValues(alpha: 0.28),
-    );
+    canvas.drawCircle(center, size.width * 0.045, Paint()..color = color);
   }
 
   @override
@@ -795,7 +899,7 @@ class _StarRingLoaderState extends State<StarRingLoader>
         const SizedBox(height: 14),
         Text(
           widget.label!,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppTheme.textTertiary,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -855,26 +959,27 @@ class ForgeSectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 0, 4, 9),
+      padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
       child: Row(
         children: [
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.textSecondary,
-                fontSize: 13,
+                fontSize: 10.5,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 0.4,
+                letterSpacing: 1.5,
               ),
             ),
           ),
           if (trailing != null)
             Text(
               trailing!,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.textTertiary,
-                fontSize: 12,
+                fontSize: 10.5,
+                letterSpacing: 0.6,
               ),
             ),
         ],

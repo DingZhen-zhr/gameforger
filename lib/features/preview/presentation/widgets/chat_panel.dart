@@ -33,9 +33,7 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
-    ref
-        .read(previewProvider(widget.projectId).notifier)
-        .sendChatMessage(text);
+    ref.read(previewProvider(widget.projectId).notifier).sendChatMessage(text);
     Future(() => _scrollToBottom());
   }
 
@@ -105,8 +103,8 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
                     itemCount: state.chatMessages.length,
                     itemBuilder: (_, i) {
                       final msg = state.chatMessages[i];
-                      final isLastAi = !msg.isUser &&
-                          i == state.chatMessages.length - 1;
+                      final isLastAi =
+                          !msg.isUser && i == state.chatMessages.length - 1;
                       return _buildBubble(msg, isLastAi, state, notifier);
                     },
                   ),
@@ -125,13 +123,18 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_outlined,
-                size: 36, color: AppTheme.primary.withValues(alpha: 0.4)),
+            Icon(
+              Icons.chat_outlined,
+              size: 36,
+              color: AppTheme.primary.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 12),
-            const Text('对游戏进行小幅修改',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+            Text(
+              '对游戏进行小幅修改',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               '例如：把跳跃高度调高、\n把玩家速度加快、改成红色主题',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppTheme.textTertiary, fontSize: 12),
@@ -153,8 +156,9 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Column(
-        crossAxisAlignment:
-            isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           // Message bubble
           Container(
@@ -176,9 +180,9 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
                 : Text(
                     msg.content,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textPrimary,
-                          height: 1.4,
-                        ),
+                      color: AppTheme.textPrimary,
+                      height: 1.4,
+                    ),
                   ),
           ),
           if (!isUser && !msg.isStreaming)
@@ -186,8 +190,7 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
               padding: const EdgeInsets.only(left: 4, top: 2),
               child: Text(
                 _formatTime(DateTime.now()),
-                style: const TextStyle(
-                    fontSize: 10, color: AppTheme.textTertiary),
+                style: TextStyle(fontSize: 10, color: AppTheme.textTertiary),
               ),
             ),
 
@@ -205,8 +208,9 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
               onApply: () => notifier.applyAcceptedEdits(),
               onManualRetry: notifier.manualRetryEdit,
               isApplying: state.agentState == AgentState.applying,
-              isAllDecided:
-                  state.pendingEdits.every((e) => e.isAccepted || e.isRejected),
+              isAllDecided: state.pendingEdits.every(
+                (e) => e.isAccepted || e.isRejected,
+              ),
             ),
           ],
         ],
@@ -224,8 +228,7 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
       decoration: BoxDecoration(
         color: AppTheme.surfaceVariant,
         border: Border(
-          top: BorderSide(
-              color: AppTheme.outlineDark.withValues(alpha: 0.3)),
+          top: BorderSide(color: AppTheme.outlineDark.withValues(alpha: 0.3)),
         ),
       ),
       child: Row(
@@ -246,8 +249,8 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
               color: agentState == AgentState.reviewing
                   ? AppTheme.gold
                   : agentState == AgentState.error
-                      ? AppTheme.error
-                      : AppTheme.primary,
+                  ? AppTheme.error
+                  : AppTheme.primary,
             ),
           const SizedBox(width: 6),
           Expanded(
@@ -268,7 +271,8 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
 
   Widget _buildInputBar(PreviewState state) {
     final canInteract = state.agentState == AgentState.idle;
-    final isThinking = state.agentState == AgentState.thinking ||
+    final isThinking =
+        state.agentState == AgentState.thinking ||
         state.agentState == AgentState.applying;
 
     String hintText;
@@ -297,14 +301,17 @@ class _PreviewChatPanelState extends ConsumerState<PreviewChatPanel> {
               enabled: canInteract,
               textInputAction: TextInputAction.send,
               onSubmitted: canInteract ? (_) => _send() : null,
-              style: const TextStyle(
-                  color: AppTheme.textPrimary, fontSize: 13),
+              style: TextStyle(color: AppTheme.textPrimary, fontSize: 13),
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle:
-                    const TextStyle(color: AppTheme.textTertiary, fontSize: 13),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                hintStyle: TextStyle(
+                  color: AppTheme.textTertiary,
+                  fontSize: 13,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 filled: true,
                 fillColor: AppTheme.surfaceVariant,
                 border: OutlineInputBorder(
@@ -384,17 +391,16 @@ class _StreamingTextState extends State<_StreamingText>
               TextSpan(
                 text: '|',
                 style: TextStyle(
-                  color: AppTheme.primary
-                      .withValues(alpha: _controller.value),
+                  color: AppTheme.primary.withValues(alpha: _controller.value),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.textPrimary,
-                height: 1.4,
-              ),
+            color: AppTheme.textPrimary,
+            height: 1.4,
+          ),
         );
       },
     );

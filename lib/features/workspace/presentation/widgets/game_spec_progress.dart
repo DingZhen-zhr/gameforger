@@ -30,7 +30,7 @@ class GameSpecProgress extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     '创意维度 · 能量校准',
                     style: TextStyle(
@@ -72,13 +72,13 @@ class GameSpecProgress extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '$filled / $total 已锁定',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textTertiary,
                       fontSize: 11,
                     ),
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   color: AppTheme.textTertiary,
                   size: 16,
@@ -115,18 +115,12 @@ class _DimensionEnergy extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 10.5,
-                ),
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 10.5),
               ),
             ),
             Text(
               '${(value * 100).round()}',
-              style: const TextStyle(
-                color: AppTheme.textTertiary,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: AppTheme.textTertiary, fontSize: 10),
             ),
           ],
         ),

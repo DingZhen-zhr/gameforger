@@ -37,12 +37,12 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
     showCupertinoDialog(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('删除作品'),
+        title: Text('删除作品'),
         content: Text('确定要删除「${project.title}」吗？\n此操作不可撤销，项目也会同步删除。'),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
+            child: Text('取消'),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
@@ -51,7 +51,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
               ref.invalidate(galleryProvider);
               Navigator.pop(ctx);
             },
-            child: const Text('删除'),
+            child: Text('删除'),
           ),
         ],
       ),
@@ -88,7 +88,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
 
         if (projects.isEmpty) {
           return _buildGalleryScroll(
-            slivers: const [
+            slivers: [
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: _GalleryMessageState(
@@ -107,12 +107,12 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
           totalCount: projects.length,
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+              padding: const EdgeInsets.fromLTRB(18, 22, 18, 8),
               sliver: SliverToBoxAdapter(
                 child: ForgeSectionLabel(
-                  title: _galleryQuery.isEmpty ? '全部作品' : '搜索结果',
+                  title: _galleryQuery.isEmpty ? 'All Works' : 'Search',
                   trailing: _galleryQuery.isEmpty
-                      ? _gallerySortLabel
+                      ? '↓ $_gallerySortLabel'
                       : '${visibleProjects.length} 件匹配',
                 ),
               ),
@@ -131,7 +131,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 118),
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 110),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate((_, i) {
                     final project = visibleProjects[i];
@@ -166,7 +166,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
               sliver: SliverToBoxAdapter(
                 child: _GalleryNav(
                   count: totalCount ?? projects.length,
@@ -177,7 +177,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
               ),
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
               sliver: SliverToBoxAdapter(
                 child: _GalleryHero(
                   projects: projects,
@@ -216,9 +216,9 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
   String get _gallerySortLabel {
     switch (_gallerySortMode) {
       case _GallerySortMode.updatedDesc:
-        return '按更新时间';
+        return 'DATE';
       case _GallerySortMode.nameAsc:
-        return '按名称';
+        return 'NAME';
     }
   }
 
@@ -227,11 +227,11 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('搜索作品'),
+        title: Text('搜索作品'),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: '输入作品名称',
             prefixIcon: Icon(Icons.search_rounded),
           ),
@@ -246,18 +246,15 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
               setState(() => _galleryQuery = '');
               Navigator.pop(ctx);
             },
-            child: const Text('清除'),
+            child: Text('清除'),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('取消')),
           ElevatedButton(
             onPressed: () {
               setState(() => _galleryQuery = ctrl.text.trim());
               Navigator.pop(ctx);
             },
-            child: const Text('搜索'),
+            child: Text('搜索'),
           ),
         ],
       ),
@@ -268,7 +265,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
     showCupertinoModalPopup(
       context: context,
       builder: (ctx) => CupertinoActionSheet(
-        title: const Text('作品操作'),
+        title: Text('作品操作'),
         message: Text(_galleryQuery.isEmpty ? '管理作品列表' : '当前搜索：$_galleryQuery'),
         actions: [
           CupertinoActionSheetAction(
@@ -276,14 +273,14 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
               Navigator.pop(ctx);
               ref.invalidate(galleryProvider);
             },
-            child: const Text('刷新作品'),
+            child: Text('刷新作品'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
               setState(() => _expandedProjectId = null);
               Navigator.pop(ctx);
             },
-            child: const Text('折叠全部预览'),
+            child: Text('折叠全部预览'),
           ),
           if (visibleProjects.isNotEmpty)
             CupertinoActionSheetAction(
@@ -291,21 +288,21 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                 Navigator.pop(ctx);
                 context.push('/project/${visibleProjects.first.id}/preview');
               },
-              child: const Text('打开第一个可见作品'),
+              child: Text('打开第一个可见作品'),
             ),
           CupertinoActionSheetAction(
             onPressed: () {
               setState(() => _gallerySortMode = _GallerySortMode.updatedDesc);
               Navigator.pop(ctx);
             },
-            child: const Text('按更新时间排序'),
+            child: Text('按更新时间排序'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
               setState(() => _gallerySortMode = _GallerySortMode.nameAsc);
               Navigator.pop(ctx);
             },
-            child: const Text('按名称排序'),
+            child: Text('按名称排序'),
           ),
           if (_galleryQuery.isNotEmpty)
             CupertinoActionSheetAction(
@@ -313,13 +310,13 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                 setState(() => _galleryQuery = '');
                 Navigator.pop(ctx);
               },
-              child: const Text('清除搜索'),
+              child: Text('清除搜索'),
             ),
         ],
         cancelButton: CupertinoActionSheetAction(
           isDefaultAction: true,
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('取消'),
+          child: Text('取消'),
         ),
       ),
     );
@@ -341,47 +338,48 @@ class _GalleryNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '作品',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  height: 1.05,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '已生成作品 · $count 个',
-                style: const TextStyle(
-                  color: AppTheme.textTertiary,
-                  fontSize: 13,
-                ),
-              ),
-            ],
+        Row(
+          children: [
+            ForgeAppMark(size: 24),
+            const Spacer(),
+            ForgeIconButton(
+              icon: query.isEmpty
+                  ? Icons.search_rounded
+                  : Icons.search_off_rounded,
+              onTap: onSearch,
+              tooltip: query.isEmpty ? '搜索' : '修改搜索',
+              size: 36,
+              iconSize: 16,
+            ),
+            const SizedBox(width: 8),
+            ForgeIconButton(
+              icon: Icons.more_horiz_rounded,
+              onTap: onMore,
+              tooltip: '更多',
+              size: 36,
+              iconSize: 16,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'WORKSHOP // WORKS',
+          style: TextStyle(
+            color: AppTheme.textTertiary,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.4,
           ),
         ),
-        const SizedBox(width: 12),
-        ForgeIconButton(
-          icon: query.isEmpty ? Icons.search_rounded : Icons.search_off_rounded,
-          onTap: onSearch,
-          tooltip: query.isEmpty ? '搜索' : '修改搜索',
-          glow: query.isNotEmpty,
-          accent: AppTheme.tabGallery,
-        ),
-        const SizedBox(width: 8),
-        ForgeIconButton(
-          icon: Icons.more_horiz_rounded,
-          onTap: onMore,
-          tooltip: '更多',
-          accent: AppTheme.tabGallery,
+        const SizedBox(height: 4),
+        Text('Works.', style: Theme.of(context).textTheme.headlineLarge),
+        const SizedBox(height: 8),
+        Text(
+          '$count 件已生成',
+          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
         ),
       ],
     );
@@ -401,15 +399,15 @@ class _GalleryHero extends StatelessWidget {
     final latest = projects.isEmpty ? null : projects.first;
 
     if (latest == null) {
-      return const ForgeGlassCard(
-        borderRadius: BorderRadius.all(Radius.circular(24)),
+      return ForgeGlassCard(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
         accent: AppTheme.secondary,
         accentOpacity: 0.06,
         borderOpacity: 0.12,
         padding: EdgeInsets.all(18),
         child: Row(
           children: [
-            NebulaOrb(size: 50, spin: false),
+            NebulaSeed(size: 50, accent: AppTheme.primary),
             SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -442,27 +440,22 @@ class _GalleryHero extends StatelessWidget {
     return GestureDetector(
       onTap: onOpenLatest,
       child: SizedBox(
-        height: 208,
+        height: 324,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(12),
           child: Stack(
             children: [
-              Positioned.fill(
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                height: 208,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(-0.45, -0.68),
-                      radius: 1.1,
-                      colors: [
-                        AppTheme.primary.withValues(alpha: 0.58),
-                        AppTheme.secondary.withValues(alpha: 0.2),
-                        AppTheme.bgDark,
-                      ],
-                      stops: const [0, 0.48, 1],
-                    ),
+                    color: const Color(0xFF0F1F12),
                     border: Border.all(
-                      color: AppTheme.primary.withValues(alpha: 0.32),
-                      width: 0.8,
+                      color: AppTheme.textPrimary.withValues(alpha: 0.18),
+                      width: 0.7,
                     ),
                   ),
                   child: CustomPaint(
@@ -475,69 +468,56 @@ class _GalleryHero extends StatelessWidget {
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(16, 42, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.68),
-                      ],
+                    color: AppTheme.surfaceDark,
+                    border: Border.all(
+                      color: AppTheme.textPrimary.withValues(alpha: 0.18),
+                      width: 0.7,
                     ),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: [
-                                ForgeChip(
-                                  label: '可玩',
-                                  tone: ForgeChipTone.cyan,
-                                  dot: true,
-                                ),
-                                ForgeChip(
-                                  label: 'Canvas',
-                                  tone: ForgeChipTone.violet,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              latest.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 19,
-                                fontWeight: FontWeight.w800,
-                                height: 1.1,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${_formatTime(latest.updatedAt)} 生成',
-                              style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          ForgeChip(
+                            label: 'NEWEST',
+                            tone: ForgeChipTone.online,
+                          ),
+                          ForgeChip(
+                            label: 'CANVAS',
+                            tone: ForgeChipTone.neutral,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        latest.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontStyle: FontStyle.italic),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${_formatTime(latest.updatedAt)} · HTML5 GAME',
+                        style: TextStyle(
+                          color: AppTheme.textTertiary,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(height: 14),
                       ForgePrimaryButton(
-                        label: '运行',
-                        icon: Icons.bolt_rounded,
+                        label: 'PLAY',
+                        icon: Icons.play_arrow_rounded,
                         onPressed: onOpenLatest,
-                        accent: AppTheme.secondary,
+                        accent: AppTheme.primary,
                         compact: true,
                       ),
                     ],
@@ -550,8 +530,9 @@ class _GalleryHero extends StatelessWidget {
                 child: Text(
                   '最新生成',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.52),
-                    fontSize: 11,
+                    color: AppTheme.textPrimary.withValues(alpha: 0.78),
+                    backgroundColor: Colors.black38,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.2,
                   ),
@@ -580,7 +561,7 @@ class _GalleryShowcasePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final starPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.45)
+      ..color = AppTheme.primary.withValues(alpha: 0.55)
       ..style = PaintingStyle.fill;
     for (var i = 0; i < 22; i++) {
       final x = size.width * (0.06 + i * 0.043);
@@ -592,13 +573,13 @@ class _GalleryShowcasePainter extends CustomPainter {
     final glow = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppTheme.cyan.withValues(alpha: 0.78),
-          AppTheme.primary.withValues(alpha: 0.18),
+          AppTheme.gold.withValues(alpha: 0.58),
+          AppTheme.primary.withValues(alpha: 0.16),
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(center: core, radius: size.width * 0.22));
     canvas.drawCircle(core, size.width * 0.2, glow);
-    canvas.drawCircle(core, 5.5, Paint()..color = Colors.white);
+    canvas.drawCircle(core, 5.5, Paint()..color = AppTheme.textPrimary);
 
     final path = Path()
       ..moveTo(size.width * 0.08, size.height * 0.82)
@@ -611,7 +592,7 @@ class _GalleryShowcasePainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = AppTheme.secondary.withValues(alpha: 0.55)
+        ..color = AppTheme.primary.withValues(alpha: 0.65)
         ..strokeWidth = 1.1
         ..style = PaintingStyle.stroke,
     );
@@ -627,7 +608,7 @@ class _GalleryShowcasePainter extends CustomPainter {
     canvas.drawPath(
       second,
       Paint()
-        ..color = AppTheme.primary.withValues(alpha: 0.44)
+        ..color = AppTheme.primary.withValues(alpha: 0.36)
         ..strokeWidth = 1
         ..style = PaintingStyle.stroke,
     );
@@ -646,7 +627,7 @@ class _GalleryMessageState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;
-  final Color accent;
+  final Color? accent;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -654,13 +635,14 @@ class _GalleryMessageState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    this.accent = AppTheme.textTertiary,
+    this.accent,
     this.actionLabel,
     this.onAction,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveAccent = accent ?? AppTheme.textTertiary;
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -669,7 +651,7 @@ class _GalleryMessageState extends StatelessWidget {
         children: [
           ForgeGlassCard(
             borderRadius: BorderRadius.circular(26),
-            accent: accent,
+            accent: effectiveAccent,
             accentOpacity: 0.1,
             padding: const EdgeInsets.all(18),
             child: Icon(icon, size: 38, color: accent),
@@ -679,7 +661,7 @@ class _GalleryMessageState extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             message,
-            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 15),
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 15),
             textAlign: TextAlign.center,
           ),
           if (actionLabel != null && onAction != null) ...[

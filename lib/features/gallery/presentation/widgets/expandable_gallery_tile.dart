@@ -167,7 +167,7 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
                 const SizedBox(height: 12),
                 Text(
                   widget.project.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
@@ -177,7 +177,7 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
                 ),
                 const SizedBox(height: 4),
                 const SizedBox(height: 8),
-                const ForgeChip(
+                ForgeChip(
                   label: '轻触打开完整预览',
                   tone: ForgeChipTone.cyan,
                   icon: Icons.open_in_full_rounded,
@@ -217,7 +217,7 @@ class _ExpandableGalleryTileState extends ConsumerState<ExpandableGalleryTile>
           color: AppTheme.error,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.delete_outline, color: Colors.white, size: 20),
@@ -308,7 +308,7 @@ class _GlassTileCardState extends State<_GlassTileCard> {
                     const SizedBox(height: 4),
                     Text(
                       '${widget.timeStr} 生成',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppTheme.textTertiary,
                         fontSize: 12,
                       ),
@@ -317,13 +317,13 @@ class _GlassTileCardState extends State<_GlassTileCard> {
                 ),
               ),
               const SizedBox(width: 8),
-              const ForgeChip(label: '可玩', tone: ForgeChipTone.cyan),
+              ForgeChip(label: '可玩', tone: ForgeChipTone.cyan),
               const SizedBox(width: 8),
               AnimatedRotation(
                 turns: widget.isExpanded ? 0.25 : 0,
                 duration: const Duration(milliseconds: 300),
                 curve: GlassUtils.iosSpringCurve,
-                child: const Icon(
+                child: Icon(
                   Icons.chevron_right_rounded,
                   color: AppTheme.textTertiary,
                   size: 18,
@@ -370,7 +370,7 @@ class _MiniGlassButton extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textPrimary,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,

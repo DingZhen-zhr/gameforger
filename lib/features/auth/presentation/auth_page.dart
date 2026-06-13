@@ -62,14 +62,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       const NebulaOrb(size: 92, spin: false),
                       const SizedBox(height: 22),
                       ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
+                        shaderCallback: (bounds) => LinearGradient(
                           colors: [
                             Colors.white,
                             AppTheme.cyan,
                             Color(0xFF9A7DFF),
                           ],
                         ).createShader(bounds),
-                        child: const Text(
+                        child: Text(
                           'GameForger',
                           style: TextStyle(
                             color: Colors.white,
@@ -81,7 +81,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       const SizedBox(height: 8),
                       Text(
                         _isLogin ? '欢迎回来' : '开始创建你的游戏',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppTheme.textTertiary,
                           fontSize: 13,
                         ),
@@ -89,7 +89,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       const SizedBox(height: 32),
                       TextFormField(
                         controller: _emailCtrl,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: '邮箱',
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
@@ -105,7 +105,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         controller: _passwordCtrl,
                         decoration: InputDecoration(
                           labelText: '密码',
-                          prefixIcon: const Icon(Icons.lock_outlined),
+                          prefixIcon: Icon(Icons.lock_outlined),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -130,7 +130,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Text(
                             auth.error!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppTheme.error,
                               fontSize: 13,
                             ),
@@ -140,7 +140,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       SizedBox(
                         width: double.infinity,
                         child: isLoading
-                            ? const ForgeGlassCard(
+                            ? ForgeGlassCard(
                                 padding: EdgeInsets.symmetric(vertical: 14),
                                 borderRadius: BorderRadius.all(
                                   Radius.circular(18),

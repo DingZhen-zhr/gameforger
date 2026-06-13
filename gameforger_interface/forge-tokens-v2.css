@@ -1,0 +1,94 @@
+/* ──────────────────────────────────────────────────────────────
+ * GameForger v2 — "Workshop" tokens
+ * 工坊炭 · 余烬橙 · 静谧的工具感
+ * 原则: 无发光 / 无玻璃 / 单一强调色 / 用排印和留白建立层次
+ * ────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Canvas — warm near-black, NOT blue */
+  --gf-bg:          #0E0D0C;
+  --gf-surface-1:   #161412;   /* default card */
+  --gf-surface-2:   #1E1B17;   /* elevated */
+  --gf-surface-3:   #252119;   /* tooltip / popover */
+
+  /* Hairlines — warm whites at low opacity */
+  --gf-line:        rgba(245, 234, 215, 0.07);
+  --gf-line-strong: rgba(245, 234, 215, 0.14);
+
+  /* Text — warm off-white */
+  --gf-text-1:      #F2EBDC;   /* primary */
+  --gf-text-2:      #A8A095;   /* secondary */
+  --gf-text-3:      #6B645B;   /* tertiary / meta */
+  --gf-text-4:      #4A453E;   /* disabled */
+
+  /* THE accent — ember orange, used sparingly */
+  --gf-ember:       #FF6A3D;
+  --gf-ember-hi:   #FF7E55;
+  --gf-ember-lo:   #E8551F;
+  --gf-ember-tint: rgba(255, 106, 61, 0.12);
+  --gf-ember-line: rgba(255, 106, 61, 0.35);
+
+  /* Status — all muted, never neon */
+  --gf-good:    #6BAE7B;
+  --gf-warn:    #E4B454;
+  --gf-bad:     #D6504E;
+  --gf-info:    #6B8FAE;
+
+  /* Radii — modest */
+  --r-xs: 4px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* Type */
+  --font-ui:   'Inter', -apple-system, "SF Pro Text", system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* canvas bg used by design-canvas grid */
+body .dc-canvas, body [data-canvas-bg] {
+  background: var(--gf-bg) !important;
+}
+
+/* clean workshop background — no stars, no glow, just paper-like noise */
+.gf-bg {
+  position: absolute; inset: 0;
+  background: var(--gf-bg);
+  overflow: hidden;
+}
+
+/* one subtle warm vignette top, no rings */
+.gf-bg::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(255, 106, 61, 0.06) 0%, transparent 55%),
+    radial-gradient(80% 60% at 50% 110%, rgba(255, 234, 200, 0.025) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* fine warm grain — keeps darks from feeling flat */
+.gf-bg::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(0.6px 0.6px at 10% 12%, rgba(245,234,215,0.06), transparent 100%),
+    radial-gradient(0.6px 0.6px at 32% 28%, rgba(245,234,215,0.05), transparent 100%),
+    radial-gradient(0.6px 0.6px at 58% 18%, rgba(245,234,215,0.05), transparent 100%),
+    radial-gradient(0.6px 0.6px at 78% 44%, rgba(245,234,215,0.06), transparent 100%),
+    radial-gradient(0.6px 0.6px at 20% 66%, rgba(245,234,215,0.05), transparent 100%),
+    radial-gradient(0.6px 0.6px at 46% 78%, rgba(245,234,215,0.06), transparent 100%),
+    radial-gradient(0.6px 0.6px at 70% 88%, rgba(245,234,215,0.05), transparent 100%);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* hide scrollbars inside artboards */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* selection */
+::selection { background: var(--gf-ember-tint); color: var(--gf-text-1); }

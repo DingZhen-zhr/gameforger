@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GameForger · Cosmic Forge OS — v1</title>
+<link rel="stylesheet" href="forge-tokens.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #14121c; }
+  body { font-family: -apple-system, "SF Pro Display", system-ui, sans-serif; }
+  /* nicer canvas chrome */
+  .gf-board {
+    background: #04030a !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+  }
+  /* override design-canvas warm gray bg with cool void */
+  body .dc-canvas, body [data-canvas-bg] { background: #14121c !important; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="forge-components.jsx"></script>
+<script type="text/babel" src="screens-tabs.jsx"></script>
+<script type="text/babel" src="screens-flow.jsx"></script>
+
+<script type="text/babel">
+const { useState } = React;
+
+const Board = ({ children }) => (
+  <div style={{
+    width: 402, height: 874, borderRadius: 54, overflow: 'hidden',
+    background: '#000', position: 'relative',
+    boxShadow: '0 0 0 6px #0a0916, 0 0 0 7px rgba(255,255,255,0.06), 0 30px 70px rgba(0,0,0,0.55), 0 0 50px rgba(123,92,255,0.08)',
+    fontFamily: 'var(--font-sf)',
+  }}>
+    <div className="forge-bg" />
+    {/* dynamic island */}
+    <div style={{
+      position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+      width: 122, height: 36, borderRadius: 24, background: '#000', zIndex: 100,
+    }} />
+    {/* status bar */}
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }}>
+      <IOSStatusBar dark />
+    </div>
+    {/* home indicator */}
+    <div style={{
+      position: 'absolute', bottom: 8, left: 0, right: 0, zIndex: 90,
+      display: 'flex', justifyContent: 'center', pointerEvents: 'none',
+    }}>
+      <div style={{ width: 139, height: 5, borderRadius: 100, background: 'rgba(255,255,255,0.55)' }} />
+    </div>
+    <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
+      {children}
+    </div>
+  </div>
+);
+
+function App() {
+  return (
+    <DesignCanvas
+      title="GameForger · Black Cosmic Forge OS"
+      subtitle="iOS · 402 × 874 pt · v1 — Splash · Projects · Gallery · Settings · Workspace · Preview"
+    >
+      <DCSection id="foundation" title="Foundation" subtitle="启动 · 品牌入口">
+        <DCArtboard id="splash" label="01 · Splash" width={420} height={892}>
+          <div style={{ padding: 9 }}><Board><SplashScreen/></Board></div>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="main-tabs" title="Main Tabs" subtitle="三大 tab — 项目 控制台 / 作品 展柜 / 控制 核心">
+        <DCArtboard id="projects" label="02 · 项目" width={420} height={892}>
+          <div style={{ padding: 9 }}><Board><ProjectsScreen/></Board></div>
+        </DCArtboard>
+        <DCArtboard id="gallery" label="03 · 作品" width={420} height={892}>
+          <div style={{ padding: 9 }}><Board><GalleryScreen/></Board></div>
+        </DCArtboard>
+        <DCArtboard id="settings" label="04 · 控制" width={420} height={892}>
+          <div style={{ padding: 9 }}><Board><SettingsScreen/></Board></div>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="flow" title="Creation Flow" subtitle="思维链工作台 → 游戏预览">
+        <DCArtboard id="workspace" label="05 · Workspace · 思维链工作台" width={420} height={892}>
+          <div style={{ padding: 9 }}><Board><WorkspaceScreen/></Board></div>
+        </DCArtboard>
+        <DCArtboard id="preview" label="06 · Preview · 游戏预览 + 代码 Tab" width={420} height={892}>
+          <div style={{ padding: 9 }}><Board><PreviewScreen tab="code"/></Board></div>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

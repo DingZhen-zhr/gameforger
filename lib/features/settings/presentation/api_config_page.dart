@@ -131,7 +131,7 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
             itemCount: _modelConfigs.length + 1,
             itemBuilder: (_, i) {
               if (i == 0) {
-                return const Padding(
+                return Padding(
                   padding: EdgeInsets.only(bottom: 16),
                   child: _SettingsSubpageHeader(
                     title: 'API 配置',
@@ -189,10 +189,10 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
               ),
               const SizedBox(height: 16),
               SwitchListTile.adaptive(
-                title: const Text('使用自己的 API Key'),
+                title: Text('使用自己的 API Key'),
                 subtitle: Text(
                   useCustom ? '将使用您填写的 Key 调用' : _defaultRouteLabel(config),
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: 12),
                 ),
                 value: useCustom,
                 onChanged: (v) {
@@ -206,7 +206,7 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: _selectedProvider[index],
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '供应商',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16,
@@ -232,7 +232,7 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                     hintText: config.hint,
                     suffixIcon: controller.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
+                            icon: Icon(Icons.clear, size: 18),
                             onPressed: () {
                               controller.clear();
                               _saveKey(index, normalizeController: false);
@@ -250,7 +250,7 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                 const SizedBox(height: 8),
                 Text(
                   _routeNote(config.modelType),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textTertiary,
                     fontSize: 11,
                     height: 1.35,
@@ -267,7 +267,7 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.wifi_find, size: 18),
+                        : Icon(Icons.wifi_find, size: 18),
                     label: Text(
                       testing ? '测试中...' : '测试连接',
                       overflow: TextOverflow.ellipsis,
@@ -394,7 +394,7 @@ class _ApiConfigPageState extends ConsumerState<ApiConfigPage> {
 
   void _showSaved() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('已保存'),
         duration: Duration(seconds: 1),
         width: 120,
@@ -425,7 +425,7 @@ class _SettingsSubpageHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
@@ -434,10 +434,7 @@ class _SettingsSubpageHeader extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  color: AppTheme.textTertiary,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
               ),
             ],
           ),

@@ -1,0 +1,177 @@
+/* ──────────────────────────────────────────────────────────────
+ * Black Cosmic Forge OS — design tokens
+ * ────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Deep space background */
+  --forge-void: #04030a;
+  --forge-deep: #07061a;
+  --forge-base: #0b0a22;
+
+  /* Brand — nebula violet/indigo */
+  --forge-violet-100: #c8b8ff;
+  --forge-violet-300: #9a7dff;
+  --forge-violet-500: #7b5cff;
+  --forge-violet-700: #4a36b3;
+  --forge-indigo-500: #5466ff;
+
+  /* Accent — cyan plasma */
+  --forge-cyan-300: #9beaff;
+  --forge-cyan-500: #4fc9e8;
+  --forge-cyan-700: #1f7a99;
+
+  /* Accent — gold (credits only) */
+  --forge-gold-300: #ffd99e;
+  --forge-gold-500: #f2c36b;
+
+  /* Danger */
+  --forge-red-500: #ff5a6b;
+
+  /* Status */
+  --forge-success: #5be7a7;
+
+  /* Text */
+  --forge-text-1: #f4f1ff;
+  --forge-text-2: rgba(244, 241, 255, 0.66);
+  --forge-text-3: rgba(244, 241, 255, 0.42);
+  --forge-text-4: rgba(244, 241, 255, 0.24);
+
+  /* Glass surfaces */
+  --forge-glass-1: rgba(255, 255, 255, 0.035);
+  --forge-glass-2: rgba(255, 255, 255, 0.06);
+  --forge-glass-3: rgba(255, 255, 255, 0.09);
+
+  /* Glass strokes */
+  --forge-stroke-1: rgba(255, 255, 255, 0.06);
+  --forge-stroke-2: rgba(255, 255, 255, 0.1);
+  --forge-stroke-violet: rgba(154, 125, 255, 0.32);
+  --forge-stroke-cyan: rgba(79, 201, 232, 0.32);
+
+  /* Radii */
+  --r-card: 24px;
+  --r-card-lg: 28px;
+  --r-btn: 16px;
+  --r-chip: 999px;
+
+  /* Shadows */
+  --shadow-glow-violet: 0 8px 32px rgba(123, 92, 255, 0.35);
+  --shadow-glow-cyan: 0 8px 32px rgba(79, 201, 232, 0.28);
+  --shadow-glass: 0 12px 40px rgba(0, 0, 0, 0.5),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* Type */
+  --font-sf: -apple-system, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ──────────────────────────────────────────────────────────────
+ * Cosmic background — used inside the device chrome
+ * ────────────────────────────────────────────────────────────── */
+
+.forge-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 70% at 18% 0%, rgba(123, 92, 255, 0.22) 0%, transparent 55%),
+    radial-gradient(80% 60% at 90% 12%, rgba(79, 201, 232, 0.14) 0%, transparent 60%),
+    radial-gradient(120% 60% at 50% 100%, rgba(74, 54, 179, 0.28) 0%, transparent 60%),
+    linear-gradient(180deg, #04030a 0%, #07061a 40%, #04030a 100%);
+  overflow: hidden;
+}
+
+.forge-bg::before {
+  /* fine star dust */
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.7), transparent 100%),
+    radial-gradient(1px 1px at 38% 8%, rgba(200,220,255,0.6), transparent 100%),
+    radial-gradient(1px 1px at 72% 24%, rgba(255,255,255,0.55), transparent 100%),
+    radial-gradient(1px 1px at 88% 6%, rgba(180,200,255,0.45), transparent 100%),
+    radial-gradient(1px 1px at 22% 42%, rgba(255,255,255,0.45), transparent 100%),
+    radial-gradient(1px 1px at 58% 36%, rgba(200,220,255,0.55), transparent 100%),
+    radial-gradient(1px 1px at 84% 52%, rgba(255,255,255,0.4), transparent 100%),
+    radial-gradient(1px 1px at 8% 64%, rgba(255,255,255,0.5), transparent 100%),
+    radial-gradient(1px 1px at 36% 72%, rgba(200,220,255,0.6), transparent 100%),
+    radial-gradient(1px 1px at 60% 84%, rgba(255,255,255,0.45), transparent 100%),
+    radial-gradient(1px 1px at 82% 92%, rgba(180,200,255,0.55), transparent 100%),
+    radial-gradient(1.2px 1.2px at 48% 58%, rgba(255,255,255,0.6), transparent 100%),
+    radial-gradient(1px 1px at 92% 78%, rgba(255,255,255,0.5), transparent 100%);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.forge-bg::after {
+  /* faint grid */
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(80% 60% at 50% 40%, #000 0%, transparent 80%);
+  -webkit-mask-image: radial-gradient(80% 60% at 50% 40%, #000 0%, transparent 80%);
+  pointer-events: none;
+}
+
+/* tighter variant for in-card backgrounds */
+.forge-bg-tight {
+  background:
+    radial-gradient(60% 60% at 50% 0%, rgba(123, 92, 255, 0.18) 0%, transparent 70%),
+    linear-gradient(180deg, #07061a 0%, #04030a 100%);
+}
+
+/* ──────────────────────────────────────────────────────────────
+ * Common element styles
+ * ────────────────────────────────────────────────────────────── */
+
+.glass-card {
+  background: var(--forge-glass-2);
+  border: 0.5px solid var(--forge-stroke-2);
+  border-radius: var(--r-card);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 10px 32px rgba(0,0,0,0.4);
+}
+
+.glass-thin {
+  background: var(--forge-glass-1);
+  border: 0.5px solid var(--forge-stroke-1);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glow-primary {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 50%),
+    linear-gradient(180deg, #8b6bff 0%, #5a3fe6 100%);
+  color: #fff;
+  border: 0.5px solid rgba(255,255,255,0.18);
+  box-shadow:
+    0 0 0 1px rgba(123, 92, 255, 0.25),
+    0 8px 24px rgba(123, 92, 255, 0.45),
+    inset 0 1px 0 rgba(255,255,255,0.28);
+}
+
+.glow-cyan {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 50%),
+    linear-gradient(180deg, #5fd6f0 0%, #2891b0 100%);
+  color: #04222a;
+  border: 0.5px solid rgba(255,255,255,0.18);
+  box-shadow:
+    0 0 0 1px rgba(79, 201, 232, 0.22),
+    0 8px 24px rgba(79, 201, 232, 0.35);
+}
+
+/* SF-style text helpers */
+.sf {
+  font-family: var(--font-sf);
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* hide scrollbars inside artboards/devices */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
